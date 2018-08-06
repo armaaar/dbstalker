@@ -23,6 +23,7 @@ class Stalker_Schema{
     public function int($name, int $length){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('int', $length);
+        $this->table_structure[$name]['validator'] = "number";
         $this->last_col = $name;
         return $this;
     }
@@ -42,17 +43,6 @@ class Stalker_Schema{
     }
 
     public function enum($name, array $vals){
-        $values = '';
-        $first = true;
-        foreach ($vals as $key => $value) {
-            if(!$first) {
-                $values .= ",";
-            } else {
-                $first = false;
-            }
-            $values .= "'$value'";
-        }
-
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('enum', $vals);
         $this->last_col = $name;
@@ -62,6 +52,7 @@ class Stalker_Schema{
     public function date($name){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('date');
+        $this->table_structure[$name]['validator'] = "date";
         $this->last_col = $name;
         return $this;
     }
@@ -69,6 +60,7 @@ class Stalker_Schema{
     public function datetime($name){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('datetime');
+        $this->table_structure[$name]['validator'] = "datetime";
         $this->last_col = $name;
         return $this;
     }
@@ -83,6 +75,7 @@ class Stalker_Schema{
         } else {
             $this->table_structure[$name]['type'] = array('float');
         }
+        $this->table_structure[$name]['validator'] = "float";
         $this->last_col = $name;
         return $this;
     }
@@ -97,6 +90,7 @@ class Stalker_Schema{
         } else {
             $this->table_structure[$name]['type'] = array('double');
         }
+        $this->table_structure[$name]['validator'] = "float";
         $this->last_col = $name;
         return $this;
     }
@@ -104,6 +98,7 @@ class Stalker_Schema{
     public function decimal($name, int $digits, int $points){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('decimal', "$digits, $points");
+        $this->table_structure[$name]['validator'] = "float";
         $this->last_col = $name;
         return $this;
     }
@@ -116,11 +111,15 @@ class Stalker_Schema{
     }
     
     public function id($name){
-        return $this->int($name, self::ID_LENGTH);
+        $this->int($name, self::ID_LENGTH);
+        $this->table_structure[$this->last_col]['validator'] = "id";
+        return $this;
     }
 
     public function email($name){
-        return $this->varchar($name, self::EMAIL_LENGTH);
+        $this->varchar($name, self::EMAIL_LENGTH);
+        $this->table_structure[$this->last_col]['validator'] = "email";
+        return $this;
     }
 
     public function password($name){
@@ -128,7 +127,9 @@ class Stalker_Schema{
     }
 
     public function phone($name){
-        return $this->varchar($name, self::PHONE_LENGTH);
+        $this->varchar($name, self::PHONE_LENGTH);
+        $this->table_structure[$this->last_col]['validator'] = "phone";
+        return $this;
     }
 
     public function ip($name){
@@ -136,16 +137,15 @@ class Stalker_Schema{
     }
 
     public function link($name){
-        return $this->varchar($name, self::LINK_LENGTH);
+        $this->varchar($name, self::LINK_LENGTH);
+        $this->table_structure[$this->last_col]['validator'] = "link";
+        return $this;
     }
 
     // additional attributes
     public function default($val){
-        if(is_null($val) || strtolower($val) == 'null') {
-            $val = NULL;
+        if(is_null($val)) {
             $this->nullable();
-        } elseif((string)$val == "") {
-            return $this;
         }
         $this->table_structure[$this->last_col]['default'] = $val;
         return $this;

@@ -58,17 +58,65 @@ class Stalker_Validator
     {
         if($zero_allowed)
         {
-            if((empty($id) && $id !=0 ) || is_null($id) || !regexCheck($id, 'number'))
+            if((empty($id) && $id !=0 ) || is_null($id) || !self::regexCheck($id, 'number'))
             {
                 return false;
             }
         } else {
-            if( empty($id) || is_null($id) || !regexCheck($id, 'number'))
+            if( empty($id) || is_null($id) || !self::regexCheck($id, 'number'))
             {
                 return false;
             }
         }
         return true;
+    }
+
+    public static function validate_to_schema(Stalker_Table $table, array $schema)
+    {
+        $validation_errors = array();
+
+        foreach ($schema as $name => $col) {
+            $validation_errors[$name] = array();
+            
+            $col_is_index = (
+                array_key_exists("key", $col) 
+                && preg_match('/^(PRI)$/',$col["key"]) 
+                && array_key_exists("validator", $col)
+                && $col['validator'] == 'id'
+            );
+
+            if(!property_exists($table, $name) && !$col_is_index && !array_key_exists("default", $col))
+            {
+                $validation_errors[$name][] = "Field can't be empty";
+            }
+
+            if(property_exists($table, $name))
+            {
+                if(!(array_key_exists("null", $col) && $col['null'] == true && is_null($table->{$name})))
+                {
+                    if(array_key_exists("validator", $col))
+                    {
+                        if($col['validator'] == 'id') {
+                            if(!self::is_id($table->{$name}, true)) {
+                              $validation_errors[$name][] = "Invalid id";
+                            }
+                        } elseif(!self::regexCheck($table->{$name}, $col['validator'])) {
+                            $validation_errors[$name][] = "Invalid value. Value must be a ".$col['validator'];
+                        }
+                    } elseif($col['type'][0] == 'enum' && !in_array($table->{$name}, $col['type'][1])) {
+                        $validation_errors[$name][] = "Invalid value";
+                    } elseif(empty($table->{$name})) {
+                        $validation_errors[$name][] = "Field can't be empty";
+                    }
+                }
+            }
+
+            if(empty($validation_errors[$name])) {
+                unset($validation_errors[$name]);
+            }
+        }
+
+        return empty($validation_errors) ? null : $validation_errors;
     }
   
 }

@@ -2,7 +2,7 @@
 
 class Courses_Class extends Stalker_Table
 {
-    private function schema() {
+    protected function schema() {
         return Stalker_Schema::build(function($table){
             $table->id("id")->primary();
             $table->id("clevel_id")->index();

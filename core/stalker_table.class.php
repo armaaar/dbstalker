@@ -3,7 +3,6 @@
 class Stalker_Table extends Stalker_Database
 {
   protected $table_name;
-  protected $validation_errors =[];
 
   public function __construct($data=null)
   {
@@ -95,7 +94,7 @@ class Stalker_Table extends Stalker_Database
   }
 
   public function validate() {
-    return empty($this->validation_errors) ? null : $this->validation_errors;
+    return Stalker_Validator::validate_to_schema($this, $this->schema());
   }
 
   public function save()
