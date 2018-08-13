@@ -10,7 +10,5 @@ spl_autoload_register(function ($class_name) {
 
 $foo = new Courses_Class();
 
-//var_dump(Stalker_Registerar::get_registerd_tables());
-//var_dump($foo->schema());
-$fa = Stalker_Migrator::table_need_migration($foo);
+$fa = Stalker_Migrator::table_migrate($foo);
 var_dump($fa);
