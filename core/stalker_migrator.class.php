@@ -2,6 +2,46 @@
 
 class Stalker_Migrator extends Stalker_Database
 {
+    public static function table_need_migration(Stalker_Table $table) {
+        if(!self::database_table_exist($table->table_name)) {
+            return TRUE;
+        } else {
+           return self::table_migration_info($table);
+        }
+    }
+    
+    public static function table_migrate(Stalker_Table $table) {
+        if(!self::database_table_exist($table->table_name)) {
+            $result = self::create_table($table);
+        } else {
+            $result = self::migrate_table($table);
+        }
+        return $result;
+    }
+
+    public static function need_migration() {
+        $tables = Stalker_Registerar::get_registerd_tables();
+        if($tables) {
+            foreach ($tables as $table_name => $table) {
+                if(self::table_need_migration($table)) 
+                {
+                    return TRUE;
+                }
+            }
+        }
+        return FALSE;
+    }
+
+    public static function migrate() {
+        $tables = Stalker_Registerar::get_registerd_tables();
+        if($tables) {
+            foreach ($tables as $table_name => $table) {
+                self::table_migrate($table);
+            }
+        }
+        return TRUE;
+    }
+
     protected static function get_database_tables(){
         $self = new static();
         $stmt = $self->execute("SELECT TABLE_NAME
@@ -28,36 +68,38 @@ class Stalker_Migrator extends Stalker_Database
         return $results;
     }
 
-    public static function table_migrate(Stalker_Table $table) {
-        $self = new static();
+    protected static function database_table_exist($table_name) {
         $existing_tables = self::get_database_tables();
-        if(!in_array($table->table_name, $existing_tables)) {
-            $result = $self->create_table($table);
-        } else {
-            $result = $self->migrate_table($table);
-        }
-        return $result;
+        return in_array($table_name, $existing_tables);
     }
 
-    protected static function table_need_migration(Stalker_Table $table) {
-        $self = new static();
+    protected static function table_migration_info(Stalker_Table $table, $return_errors=false) {
         $existing_table_fields = self::get_table_description($table->table_name);
         $sync_cols = array();
         $errors = array();
         foreach ($table->schema() as $name => $col) {
             $key = array_search($name, array_column($existing_table_fields, 'Field'));
             if($key === FALSE) {
+                if(!$return_errors) {
+                    return TRUE;
+                }
                 $errors[$name] = array("add", $col, NULL);
                 continue;
             }
             $sync_cols[] = $name;
             preg_match('/^(\w+)\(?([^)]+)?\)?$/', $existing_table_fields[$key]['Type'], $matches, PREG_UNMATCHED_AS_NULL);
             if($matches[1] != $col['type'][0]) {
+                if(!$return_errors) {
+                    return TRUE;
+                }
                 $errors[$name] = array("modify", $col, $existing_table_fields[$key]);
                 continue;
             }
             if(array_key_exists(1, $col['type'])){
                 if(is_null($matches[2])) {
+                    if(!$return_errors) {
+                        return TRUE;
+                    }
                     $errors[$name] = array("modify", $col, $existing_table_fields[$key]);
                     continue;
                 }
@@ -65,6 +107,9 @@ class Stalker_Migrator extends Stalker_Database
                     $col['type'][1] = "'" . implode ( "','", $col['type'][1] ) . "'";
                 }
                 if($col['type'][1] != $matches[2]) {
+                    if(!$return_errors) {
+                        return TRUE;
+                    }
                     $errors[$name] = array("modify", $col, $existing_table_fields[$key]);
                     continue;
                 }
@@ -72,11 +117,17 @@ class Stalker_Migrator extends Stalker_Database
 
             if(array_key_exists('null', $col) && $col['null']) {
                 if($existing_table_fields[$key]['Null'] == 'NO') {
+                    if(!$return_errors) {
+                        return TRUE;
+                    }
                     $errors[$name] = array("modify", $col, $existing_table_fields[$key]);
                     continue;
                 }
             } else {
                 if($existing_table_fields[$key]['Null'] == 'YES') {
+                    if(!$return_errors) {
+                        return TRUE;
+                    }
                     $errors[$name] = array("modify", $col, $existing_table_fields[$key]);
                     continue;
                 }
@@ -84,6 +135,9 @@ class Stalker_Migrator extends Stalker_Database
 
             if(array_key_exists('default', $col)) {
                 if(is_null($col['default']) && !is_null($existing_table_fields[$key]['Default'])) {
+                    if(!$return_errors) {
+                        return TRUE;
+                    }
                     $errors[$name] = array("modify", $col, $existing_table_fields[$key]);
                     continue;
                 }
@@ -98,21 +152,34 @@ class Stalker_Migrator extends Stalker_Database
                 }
 
                 if($existing_table_fields[$key]['Default'] != $col['default']) {
+                    if(!$return_errors) {
+                        return TRUE;
+                    }
                     $errors[$name] = array("modify", $col, $existing_table_fields[$key]);
                     continue;
                 }
                 
             } elseif(!is_null($existing_table_fields[$key]['Default'])) {
+                if(!$return_errors) {
+                    return TRUE;
+                }
                 $errors[$name] = array("modify", $col, $existing_table_fields[$key]);
                 continue;
             }
 
             if(array_key_exists('ai', $col) && $col['ai'] && $existing_table_fields[$key]['Extra'] != 'auto_increment') {
+                if(!$return_errors) {
+                    return TRUE;
+                }
                 $errors[$name] = array("modify", $col, $existing_table_fields[$key]);
                 continue;
             }
 
-            if(array_key_exists('key', $col) && $col['key'] != $existing_table_fields[$key]['Key']) {
+            if( !array_key_exists('key', $col) && $existing_table_fields[$key]['Key']
+            || array_key_exists('key', $col) && $col['key'] != $existing_table_fields[$key]['Key']) {
+                if(!$return_errors) {
+                    return TRUE;
+                }
                 $errors[$name] = array("modify", $col, $existing_table_fields[$key]);
                 continue;
             }
@@ -120,15 +187,22 @@ class Stalker_Migrator extends Stalker_Database
 
         $unsync_cols = array_diff(array_column($existing_table_fields, 'Field'), $sync_cols);
         if($unsync_cols){
+            if(!$return_errors) {
+                return TRUE;
+            }
             foreach ($unsync_cols as $col) {
                 $key = array_search($col, array_column($existing_table_fields, 'Field'));
                 $errors[$col] = array("drop", NULL, $existing_table_fields[$key]);
             }
         }
+        if(!$return_errors) {
+            return FALSE;
+        }
         return $errors;
     }
 
-    protected function create_table(Stalker_Table $table) {
+    protected static function create_table(Stalker_Table $table) {
+        $self = new static();
         $table_name = $table->table_name;
         $schema = $table->schema();
         $query="";
@@ -203,12 +277,13 @@ class Stalker_Migrator extends Stalker_Database
         }
         $query = substr($query, 0, -1);
 
-        $this->execute("CREATE TABLE IF NOT EXISTS `$table_name` ($query) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci");
+        $self->execute("CREATE TABLE IF NOT EXISTS `$table_name` ($query) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci");
         return TRUE;
     }
     
-    protected function migrate_table(Stalker_Table $table) {
-        $cols = self::table_need_migration($table);
+    protected static function migrate_table(Stalker_Table $table) {
+        $self = new static();
+        $cols = self::table_migration_info($table, TRUE);
         if($cols) {
             $query="";
             $drop_pri = '';
@@ -290,8 +365,7 @@ class Stalker_Migrator extends Stalker_Database
             }
             
             $query = substr($query, 0, -1);
-            var_dump("ALTER TABLE `{$table->table_name}` $drop_pri $query;");
-            $this->execute("ALTER TABLE `{$table->table_name}` $drop_pri $query;");
+            $self->execute("ALTER TABLE `{$table->table_name}` $drop_pri $query;");
         }
         return TRUE;
     }

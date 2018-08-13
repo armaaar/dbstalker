@@ -1,14 +1,20 @@
 <?php
+include_once './core/stalker_registerar.class.php';
+include_once './core/stalker_schema.class.php';
+include_once './core/stalker_validator.class.php';
+include_once './core/stalker_singleton.class.php';
+include_once './core/stalker_database.class.php';
+include_once './core/stalker_table.class.php';
+include_once './core/stalker_migrator.class.php';
 
-spl_autoload_register(function ($class_name) {
-    if(preg_match('/^stalker_.+/i', $class_name)) {
-        include_once './core/'. $class_name . '.class.php';
-    } else {
-        include_once './tables/'. $class_name . '.table.php';
-    }
-});
+foreach ( glob("./tables/*.table.php") as $file ) {
+	require_once $file;
+}
 
-$foo = new Courses_Class();
+Stalker_Registerar::auto_register();
+var_dump(Stalker_Registerar::get_registerd_tables());
 
-$fa = Stalker_Migrator::table_migrate($foo);
+$fa = Stalker_Migrator::need_migration();
+var_dump($fa);
+$fa = Stalker_Migrator::migrate();
 var_dump($fa);
