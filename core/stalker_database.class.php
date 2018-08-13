@@ -2,19 +2,32 @@
 
 class Stalker_Database extends Stalker_Singleton {
 
-  protected $db;
-  protected $active_transaction;
+	protected $db;
+	/**
+	 * @var array Database drivers that support SAVEPOINT * statements.
+	 */
+	protected static $_supportedDrivers = array("pgsql", "mysql");
+	/**
+	 * @var bool if database driver support savepoints
+	 */
+	protected $_hasSavepoint = FALSE;
+	/**
+	 * @var int the current transaction depth
+	 */
+	protected $_transactionDepth = 0;
 
-  /**
-   * Make constructor protected, so nobody can call "new Class" but children.
-   */
-  protected function __construct() {
-    $connection = json_decode(file_get_contents("./stalker_config.json"));
+	/**
+	 * Make constructor protected, so nobody can call "new Class" but children.
+	 */
+	protected function __construct() {
+		$connection = json_decode(file_get_contents("./stalker_config.json"));
 		$this -> db = new PDO('mysql:host=' . $connection -> host . ';dbname=' . $connection -> database . ';charset=utf8', $connection -> user, $connection -> password);
 		$this -> db -> setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$this -> db -> setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
 		$this -> db -> setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-
+		$this->_hasSavepoint = in_array(
+			$this-> db ->getAttribute(PDO::ATTR_DRIVER_NAME), self::$_supportedDrivers
+		);
 		// adjusting timezone
 		$now = new DateTime();
 		$mins = $now -> getOffset() / 60;
@@ -27,68 +40,60 @@ class Stalker_Database extends Stalker_Singleton {
 		$offset = sprintf('%+d:%02d', $hrs * $sgn, $mins);
 
 		$this -> db -> exec("SET time_zone='$offset';");
-		$this -> active_transaction = false;
-  }
-
-  public function beginTransaction()
-	{
-		if(!$this->active_transaction)
-		{
-			try {
-			    $this -> db -> beginTransaction();
-			} catch(PDOException $ex) {
-			    //Something went wrong rollback!
-			    $this->rollBack();
-			    err("FATAL: " . __CLASS__ . "::" . __FUNCTION__ . " -> " . $ex -> getMessage());
-				die();
-			}
-			
-		}
-		$this->active_transaction = [$this->active_transaction];
 	}
 
-	public function rollBack()
+	/**
+	 * Start transaction
+	 *
+	 * @return bool|void
+	 */
+	public function beginTransaction()
 	{
-		if($this->active_transaction)
-		{
-			$this->active_transaction = $this->active_transaction[0];
+		if($this->_transactionDepth == 0 || !$this->_hasSavepoint) {
+			$this -> db -> beginTransaction();
+		} else {
+			$this->db->exec("SAVEPOINT LEVEL{$this->_transactionDepth}");
 		}
-		if(!$this->active_transaction)
-		{
-			$this -> db -> rollBack();
-		}
+
+		$this->_transactionDepth++;
 	}
 
+	/**
+	 * Commit current transaction
+	 *
+	 * @return bool|void
+	 */
 	public function commit()
 	{
-		if($this->active_transaction)
-		{
-			$this->active_transaction = $this->active_transaction[0];
-		}
-		if(!$this->active_transaction)
-		{
-			try {
-			    $this -> db -> commit();
-			} catch(PDOException $ex) {
-			    //Something went wrong rollback!
-			    $this->rollBack();
-			    err("FATAL: " . __CLASS__ . "::" . __FUNCTION__ . " -> " . $ex -> getMessage());
-				die();
-			}
+		$this->_transactionDepth--;
+
+		if($this->_transactionDepth == 0 || !$this->_hasSavepoint) {
+			$this -> db -> commit();
+		} else {
+			$this->db->exec("RELEASE SAVEPOINT LEVEL{$this->_transactionDepth}");
 		}
 	}
 
-	public function transaction_is_active()
+	/**
+	 * Rollback current transaction,
+	 *
+	 * @throws PDOException if there is no transaction started
+	 * @return bool|void
+	 */
+	public function rollBack()
 	{
-		if($this->active_transaction)
-		{
-			return true;
-		}
-		return false;
-	}
 
-	public function __destruct() {
-		$this -> db = null;
+		if ($this->_transactionDepth == 0) {
+			throw new PDOException('Rollback error : There is no transaction started');
+		}
+
+		$this->_transactionDepth--;
+
+		if($this->_transactionDepth == 0 || !$this->_hasSavepoint) {
+			$this -> db -> rollBack();
+		} else {
+			$this->db->exec("ROLLBACK TO SAVEPOINT LEVEL{$this->_transactionDepth}");
+		}
 	}
 
 	protected function execute($query, $args = array())
