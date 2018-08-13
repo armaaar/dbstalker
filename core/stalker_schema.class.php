@@ -57,6 +57,14 @@ class Stalker_Schema{
         return $this;
     }
 
+    public function time($name){
+        $this->table_structure[$name] = array();
+        $this->table_structure[$name]['type'] = array('time');
+        $this->table_structure[$name]['validator'] = "24hours";
+        $this->last_col = $name;
+        return $this;
+    }
+
     public function datetime($name){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('datetime');
@@ -103,7 +111,7 @@ class Stalker_Schema{
         return $this;
     }
 
-    public function bool($name){
+    public function boolean($name){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('tinyint', 1);
         $this->last_col = $name;
@@ -144,6 +152,10 @@ class Stalker_Schema{
 
     // additional attributes
     public function default($val){
+        if(!in_array(gettype($val), array('boolean', 'string', 'integer', 'double', 'NULL'))) {
+            error_log("FATAL: default value for column '{$this->last_col}' of unknown type ".gettype($val));
+			die();
+        }
         if(is_null($val)) {
             $this->nullable();
         }

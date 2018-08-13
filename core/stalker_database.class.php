@@ -3,6 +3,7 @@
 class Stalker_Database extends Stalker_Singleton {
 
 	protected $db;
+	protected $connection;
 	/**
 	 * @var array Database drivers that support SAVEPOINT * statements.
 	 */
@@ -20,8 +21,8 @@ class Stalker_Database extends Stalker_Singleton {
 	 * Make constructor protected, so nobody can call "new Class" but children.
 	 */
 	protected function __construct() {
-		$connection = json_decode(file_get_contents("./stalker_config.json"));
-		$this -> db = new PDO('mysql:host=' . $connection -> host . ';dbname=' . $connection -> database . ';charset=utf8', $connection -> user, $connection -> password);
+		$this -> connection = json_decode(file_get_contents("./stalker_config.json"));
+		$this -> db = new PDO('mysql:host=' . $this -> connection -> host . ';dbname=' . $this -> connection -> database . ';charset=utf8', $this -> connection -> user, $this -> connection -> password);
 		$this -> db -> setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$this -> db -> setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
 		$this -> db -> setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
@@ -98,25 +99,25 @@ class Stalker_Database extends Stalker_Singleton {
 
 	protected function execute($query, $args = array())
 	{
-	  if(empty($query))
-	  {
-		$trace = debug_backtrace();
-		$caller = $trace[1];
-		error_log("FATAL: " .$caller['class']. "::" .$caller['function']. " -> Empty query string");
-		die();
-		return false;
-	  }
-	  $stmt = $this -> db -> prepare($query);
-		  try {
-			  $stmt -> execute($args);
-		  } catch(PDOException $ex) {
-		$trace = debug_backtrace();
-		$caller = $trace[1];
-			  error_log("FATAL: " .$caller['class']. "::" .$caller['function']. " -> " . $ex -> getMessage());
-		die();
-			  return false;
-		  }
-	  return $stmt;
+		if(empty($query))
+		{
+			$trace = debug_backtrace();
+			$caller = $trace[1];
+			error_log("FATAL: " .$caller['class']. "::" .$caller['function']. " -> Empty query string");
+			die();
+			return false;
+		}
+		$stmt = $this -> db -> prepare($query);
+		try {
+			$stmt -> execute($args);
+		} catch(PDOException $ex) {
+			$trace = debug_backtrace();
+			$caller = $trace[1];
+			error_log("FATAL: " .$caller['class']. "::" .$caller['function']. " -> " . $ex -> getMessage());
+			die();
+			return false;
+		}
+	  	return $stmt;
 	}
   
 	protected function lastInsertId($name = null)

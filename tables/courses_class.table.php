@@ -2,17 +2,18 @@
 
 class Courses_Class extends Stalker_Table
 {
-    protected function schema() {
+    public function schema() {
         return Stalker_Schema::build(function($table){
             $table->id("id")->primary();
             $table->id("clevel_id")->index();
             $table->id("branch_id")->index();
             $table->int("min_kids", 3)->default(1);
             $table->int("max_kids", 3);
-            $table->varchar("schedule", 1024);
+            $table->varchar("schedule", 1024)->unique();
             $table->enum("type", array('norm', 'comp'))->default('norm');
-            $table->bool("uniform")->default(0);
+            $table->boolean("uniform")->default(false);
             $table->date("start_date")->nullable()->default(NULL);
+            $table->time("start_time")->nullable()->default(NULL);
             $table->int("period", 3);
             $table->int("price", 6);
             $table->enum("state", array(

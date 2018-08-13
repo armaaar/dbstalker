@@ -2,13 +2,13 @@
 
 class Stalker_Table extends Stalker_Database
 {
-  protected $table_name;
+  public $table_name;
 
   public function __construct($data=null)
   {
     //register the table
     $this->table_name = strtolower(get_class($this));
-    if(!Stalker_Registerar::isTableRegistered($this->table_name)){
+    if(!Stalker_Registerar::is_table_registered($this->table_name)){
       Stalker_Registerar::register($this->table_name, $this);
     }
 
