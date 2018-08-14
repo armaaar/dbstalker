@@ -1,6 +1,20 @@
 {
-  "host": "",
-  "database": "",
-  "user": "",
-  "password": ""
+  "database": {
+    "host": "",
+    "database": "",
+    "user": "",
+    "password": ""
+  },
+  "settings": {
+    "engine": "InnoDB",
+    "collation": "utf8_general_ci"
+  },
+  "customLengths": {
+    "id": 11,
+    "email": 255,
+    "password": 40,
+    "phone": 20,
+    "ip": 45,
+    "link": 512
+  }
 }

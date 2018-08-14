@@ -21,7 +21,7 @@ class Stalker_Database extends Stalker_Singleton {
 	 * Make constructor protected, so nobody can call "new Class" but children.
 	 */
 	protected function __construct() {
-		$this -> connection = json_decode(file_get_contents("./stalker_config.json"));
+		$this -> connection = Stalker_Configuration::database_connection();
 		$this -> db = new PDO('mysql:host=' . $this -> connection -> host . ';dbname=' . $this -> connection -> database . ';charset=utf8', $this -> connection -> user, $this -> connection -> password);
 		$this -> db -> setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$this -> db -> setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);

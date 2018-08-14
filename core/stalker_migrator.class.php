@@ -276,8 +276,11 @@ class Stalker_Migrator extends Stalker_Database
             }
         }
         $query = substr($query, 0, -1);
-
-        $self->execute("CREATE TABLE IF NOT EXISTS `$table_name` ($query) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci");
+        $settings = Stalker_Configuration::table_settings();
+        $self->execute("CREATE TABLE IF NOT EXISTS `$table_name` ($query)
+                        ENGINE={$settings->engine}
+                        CHARACTER SET {$settings->charset}
+                        COLLATE {$settings->collation}");
         return TRUE;
     }
     
