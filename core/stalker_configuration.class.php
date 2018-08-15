@@ -12,7 +12,7 @@ class Stalker_Configuration {
     const PASSWORD_LENGTH = 40;
     const PHONE_LENGTH = 20;
     const IP_LENGTH = 45;
-    const LINK_LENGTH = 512;
+    const LINK_LENGTH = 511;
 
     private function __construct() {}
     

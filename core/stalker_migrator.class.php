@@ -87,7 +87,7 @@ class Stalker_Migrator extends Stalker_Database
                 continue;
             }
             $sync_cols[] = $name;
-            preg_match('/^(\w+)\(?([^)]+)?\)?$/', $existing_table_fields[$key]['Type'], $matches, PREG_UNMATCHED_AS_NULL);
+            preg_match('/^(\w+)\(?([^)]+)?\)?/', $existing_table_fields[$key]['Type'], $matches, PREG_UNMATCHED_AS_NULL);
             if($matches[1] != $col['type'][0]) {
                 if(!$return_errors) {
                     return TRUE;
