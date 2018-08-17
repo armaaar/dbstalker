@@ -9,7 +9,7 @@ class Stalker_Migrator extends Stalker_Database
            return self::table_migration_info($table);
         }
     }
-    
+
     public static function table_migrate(Stalker_Table $table) {
         if(!self::database_table_exist($table->table_name)) {
             $result = self::create_table($table);
@@ -23,11 +23,30 @@ class Stalker_Migrator extends Stalker_Database
         $tables = Stalker_Registerar::get_registerd_tables();
         if($tables) {
             foreach ($tables as $table_name => $table) {
-                if(self::table_need_migration($table)) 
+                if(self::table_need_migration($table))
                 {
                     return TRUE;
                 }
             }
+        }
+        return FALSE;
+    }
+
+    public static function need_migration_data() {
+        $tables = Stalker_Registerar::get_registerd_tables();
+        if($tables) {
+            $data = array();
+            foreach ($tables as $table_name => $table) {
+                if(!self::database_table_exist($table_name)) {
+                    $data[$table_name] = "create";
+                } else {
+                    $info = self::table_migration_info($table, true);
+                    if($info) {
+                        $data[$table_name] = $info;
+                    }
+                }
+            }
+            return $data;
         }
         return FALSE;
     }
@@ -45,7 +64,7 @@ class Stalker_Migrator extends Stalker_Database
     protected static function get_database_tables(){
         $self = new static();
         $stmt = $self->execute("SELECT TABLE_NAME
-                                FROM INFORMATION_SCHEMA.TABLES 
+                                FROM INFORMATION_SCHEMA.TABLES
                                 WHERE TABLE_SCHEMA = ?",
                             array($self->connection->database));
         $stmt->setFetchMode(PDO::FETCH_ASSOC);
@@ -158,7 +177,7 @@ class Stalker_Migrator extends Stalker_Database
                     $errors[$name] = array("modify", $col, $existing_table_fields[$key]);
                     continue;
                 }
-                
+
             } elseif(!is_null($existing_table_fields[$key]['Default'])) {
                 if(!$return_errors) {
                     return TRUE;
@@ -231,7 +250,7 @@ class Stalker_Migrator extends Stalker_Database
                     $default_type = gettype($col['default']);
                     if($default_type == "string"){
                         $query .= " '{$col['default']}'";
-                        
+
                     } elseif($default_type == "boolean") {
                         if($col['default']) {
                             $query .= " 1";
@@ -241,7 +260,7 @@ class Stalker_Migrator extends Stalker_Database
                     } elseif(in_array($default_type, array('integer', 'double'))) {
                         $query .= " {$col['default']}";
                     } else {
-                        error_log("FATAL: default value for column '$name' of unknown type ".$default_type);
+                        trigger_error("Default value for column '$name' of unknown type ".$default_type, E_USER_ERROR);
 			            die();
                     }
                 }
@@ -283,7 +302,7 @@ class Stalker_Migrator extends Stalker_Database
                         COLLATE {$settings->collation}");
         return TRUE;
     }
-    
+
     protected static function migrate_table(Stalker_Table $table) {
         $self = new static();
         $cols = self::table_migration_info($table, TRUE);
@@ -304,7 +323,7 @@ class Stalker_Migrator extends Stalker_Database
                     } else {
                         $query .= " NOT NULL";
                     }
-        
+
                     if(array_key_exists('default', $col[1])) {
                         $query .= " DEFAULT";
                         if(is_null($col[1]['default'])) {
@@ -313,7 +332,7 @@ class Stalker_Migrator extends Stalker_Database
                             $default_type = gettype($col[1]['default']);
                             if($default_type == "string"){
                                 $query .= " '{$col[1]['default']}'";
-                                
+
                             } elseif($default_type == "boolean") {
                                 if($col[1]['default']) {
                                     $query .= " 1";
@@ -323,19 +342,19 @@ class Stalker_Migrator extends Stalker_Database
                             } elseif(in_array($default_type, array('integer', 'double'))) {
                                 $query .= " {$col[1]['default']}";
                             } else {
-                                error_log("FATAL: default value for column '$name' of unknown type ".$default_type);
+                                trigger_error("Default value for column '$name' of unknown type ".$default_type, E_USER_ERROR);
                                 die();
                             }
                         }
                     }
-        
+
                     if(array_key_exists('ai', $col[1]) && $col[1]['ai']) {
                         $query .= " AUTO_INCREMENT";
                     }
                 } else {
                     $query .= "DROP COLUMN `$name`";
                 }
-                
+
                 if($col[0] != 'drop') {
                     if(array_key_exists('key', $col[1])) {
                         if($col[1]['key'] != $col[2]['Key']) {
@@ -347,7 +366,7 @@ class Stalker_Migrator extends Stalker_Database
                                     $query .= ", DROP INDEX `$name`";
                                 }
                             }
-    
+
                             if($col[1]['key'] == "PRI") {
                                 $query .= ", ADD PRIMARY KEY (`$name`)";
                             } elseif($col[1]['key'] == "UNI") {
@@ -366,7 +385,7 @@ class Stalker_Migrator extends Stalker_Database
                 }
                 $query .= ",";
             }
-            
+
             $query = substr($query, 0, -1);
             $self->execute("ALTER TABLE `{$table->table_name}` $drop_pri $query;");
         }

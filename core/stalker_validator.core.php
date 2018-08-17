@@ -1,9 +1,9 @@
 <?php
 
-class Stalker_Validator 
+class Stalker_Validator
 {
     private function __construct() {}
-    
+
     public static function regexCheck($item,$type) {
         if(empty($item) && $item !=0)
         {
@@ -53,7 +53,7 @@ class Stalker_Validator
         }
         return preg_match($regex, $item);
     }
-    
+
     public static function is_id($id, $zero_allowed= false)
     {
         if($zero_allowed)
@@ -77,10 +77,10 @@ class Stalker_Validator
 
         foreach ($schema as $name => $col) {
             $validation_errors[$name] = array();
-            
+
             $col_is_index = (
-                array_key_exists("key", $col) 
-                && preg_match('/^(PRI)$/',$col["key"]) 
+                array_key_exists("key", $col)
+                && preg_match('/^(PRI)$/',$col["key"])
                 && array_key_exists("validator", $col)
                 && $col['validator'] == 'id'
             );
@@ -118,5 +118,5 @@ class Stalker_Validator
 
         return empty($validation_errors) ? null : $validation_errors;
     }
-  
+
 }

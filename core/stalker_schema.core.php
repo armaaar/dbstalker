@@ -1,6 +1,7 @@
 <?php
 
 class Stalker_Schema{
+    const SEED_COLUMN = "main_seed";
     private $table_structure = array();
     private $last_col;
     private $lengths;
@@ -12,6 +13,15 @@ class Stalker_Schema{
     public static function build(Closure $callable){
         $self = new static();
         $callable($self);
+        // add primary id
+        $self->id("id")->primary();
+        // check if table has seeds
+        $trace = debug_backtrace();
+        $caller = $trace[1];
+        if(Stalker_Registerar::table_has_seed($caller['class'])) {
+            $self->boolean(self::SEED_COLUMN)->nullable()->default(NULL);
+        }
+        //return schema
         return $self->table_structure;
     }
 
@@ -71,7 +81,7 @@ class Stalker_Schema{
 
     public function float(string $name, $digits=null, $points=null){
         $this->table_structure[$name] = array();
-        if(Stalker_Validator::regexCheck($digits, 'number') 
+        if(Stalker_Validator::regexCheck($digits, 'number')
                 && Stalker_Validator::regexCheck($points, 'number')
                 && (int)$digits >= (int)$points)
         {
@@ -86,7 +96,7 @@ class Stalker_Schema{
 
     public function double(string $name, $digits=null, $points=null){
         $this->table_structure[$name] = array();
-        if(Stalker_Validator::regexCheck($digits, 'number') 
+        if(Stalker_Validator::regexCheck($digits, 'number')
                 && Stalker_Validator::regexCheck($points, 'number')
                 && (int)$digits >= (int)$points)
         {
@@ -113,7 +123,7 @@ class Stalker_Schema{
         $this->last_col = $name;
         return $this;
     }
-    
+
     public function id(string $name){
         $this->int($name, $this->lengths->id);
         $this->table_structure[$this->last_col]['validator'] = "id";
@@ -149,7 +159,7 @@ class Stalker_Schema{
     // additional attributes
     public function default($val){
         if(!in_array(gettype($val), array('boolean', 'string', 'integer', 'double', 'NULL'))) {
-            error_log("FATAL: default value for column '{$this->last_col}' of unknown type ".gettype($val));
+            trigger_error("Default value for column '{$this->last_col}' of unknown type ".gettype($val), E_USER_ERROR);
 			die();
         }
         if(is_null($val)) {
@@ -158,23 +168,23 @@ class Stalker_Schema{
         $this->table_structure[$this->last_col]['default'] = $val;
         return $this;
     }
-    
+
     public function nullable(){
         $this->table_structure[$this->last_col]['null'] = TRUE;
         return $this;
     }
-    
+
     public function primary(){
         $this->table_structure[$this->last_col]['key'] = 'PRI';
         $this->table_structure[$this->last_col]['ai'] = TRUE;
         return $this;
     }
-    
+
     public function index(){
         $this->table_structure[$this->last_col]['key'] = 'MUL';
         return $this;
     }
-    
+
     public function unique(){
         $this->table_structure[$this->last_col]['key'] = 'UNI';
         return $this;

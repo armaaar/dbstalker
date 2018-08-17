@@ -103,7 +103,7 @@ class Stalker_Database extends Stalker_Singleton {
 		{
 			$trace = debug_backtrace();
 			$caller = $trace[1];
-			error_log("FATAL: " .$caller['class']. "::" .$caller['function']. " -> Empty query string");
+			trigger_error($caller['class']. "::" .$caller['function']. " -> Empty query string", E_USER_ERROR);
 			die();
 			return false;
 		}
@@ -113,13 +113,13 @@ class Stalker_Database extends Stalker_Singleton {
 		} catch(PDOException $ex) {
 			$trace = debug_backtrace();
 			$caller = $trace[1];
-			error_log("FATAL: " .$caller['class']. "::" .$caller['function']. " -> " . $ex -> getMessage());
+			trigger_error($caller['class']. "::" .$caller['function']. " -> " . $ex -> getMessage(), E_USER_ERROR);
 			die();
 			return false;
 		}
 	  	return $stmt;
 	}
-  
+
 	protected function lastInsertId($name = null)
 	{
 	  return $this -> db -> lastInsertId($name);

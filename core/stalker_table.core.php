@@ -145,13 +145,13 @@ class Stalker_Table extends Stalker_Database
     $columns = '';
     $values = '';
     foreach ($data as $key => $value) {
-      if($key == 'id')
-      {
-        continue;
-      }
-      $columns .= "`$key`,";
-      $values .= ":$key,";
-      $args[":$key"] = $value;
+        if($key == 'id')
+        {
+            continue;
+        }
+        $columns .= "`$key`,";
+        $values .= ":$key,";
+        $args[":$key"] = $value;
     }
     $columns = rtrim($columns,',');
     $values = rtrim($values,',');
@@ -163,9 +163,9 @@ class Stalker_Table extends Stalker_Database
 
   public function delete()
   {
-    $stmt = $this ->db->execute("DELETE FROM `{$this->table_name}` WHERE `id`=:id LIMIT 1",['id'=>$this->id]);
-    $this->reset_object();
-    return true;
+        $stmt = $this ->db->execute("DELETE FROM `{$this->table_name}` WHERE `id`=:id LIMIT 1",['id'=>$this->id]);
+        $this->reset_object();
+        return true;
   }
 
 }

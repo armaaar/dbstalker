@@ -15,7 +15,7 @@ class Stalker_Configuration {
     const LINK_LENGTH = 511;
 
     private function __construct() {}
-    
+
     private static function read_stalker_configuration() {
             self::$configuration = json_decode(file_get_contents("./stalker_config.json"));
             if(json_last_error()===JSON_ERROR_NONE) {
@@ -68,7 +68,7 @@ class Stalker_Configuration {
         });
     }
 
-    
+
 
     public static function custom_feilds_lengths() {
         return self::public_decorator(function() {
@@ -134,5 +134,5 @@ class Stalker_Configuration {
         });
     }
 
-    
+
 }
