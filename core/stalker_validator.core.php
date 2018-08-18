@@ -105,7 +105,9 @@ class Stalker_Validator
                         }
                     } elseif($col['type'][0] == 'enum' && !in_array($table->{$name}, $col['type'][1])) {
                         $validation_errors[$name][] = "Invalid value";
-                    } elseif(empty($table->{$name})) {
+                    } elseif(is_array($table->{$name})) {
+                        $validation_errors[$name][] = "Field can't be an array";
+                    } elseif(is_null($table->{$name})) {
                         $validation_errors[$name][] = "Field can't be empty";
                     }
                 }
