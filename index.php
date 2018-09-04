@@ -3,7 +3,6 @@ include_once './core/stalker_configuration.core.php';
 include_once './core/stalker_registerar.core.php';
 include_once './core/stalker_schema.core.php';
 include_once './core/stalker_validator.core.php';
-include_once './core/stalker_singleton.core.php';
 include_once './core/stalker_database.core.php';
 include_once './core/stalker_table.core.php';
 include_once './core/stalker_seed.core.php';
@@ -11,6 +10,10 @@ include_once './core/stalker_seeder.core.php';
 include_once './core/stalker_migrator.core.php';
 
 foreach ( glob("./tables/*.table.php") as $file ) {
+    require_once $file;
+}
+
+foreach ( glob("./views/*.view.php") as $file ) {
     require_once $file;
 }
 

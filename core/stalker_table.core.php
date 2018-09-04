@@ -1,8 +1,9 @@
 <?php
 
-class Stalker_Table extends Stalker_Database
+class Stalker_Table
 {
   public $table_name;
+  protected $db;
 
   public function __construct($data=null)
   {
@@ -157,7 +158,7 @@ class Stalker_Table extends Stalker_Database
     $values = rtrim($values,',');
     $stmt = $this ->db->execute("INSERT INTO `{$this->table_name}` ($columns) VALUES($values)", $args);
 
-    $this->id = $this -> db -> lastInsertId();
+    $this->id = $this->db->lastInsertId();
     return true;
   }
 

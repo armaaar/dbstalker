@@ -1,7 +1,11 @@
 <?php
 
-class Stalker_Seeder extends Stalker_Database {
+class Stalker_Seeder {
+    protected $db;
 
+    protected function __construct() {
+        $this->db = Stalker_Database::instance();
+    }
     public static function seed_main_seeds($force_seed = FALSE) {
         $seeds = Stalker_Registerar::get_seeds();
         if($seeds) {
@@ -106,7 +110,7 @@ class Stalker_Seeder extends Stalker_Database {
     protected static function seed_exists($table_name, $id) {
         $table_name = strtolower($table_name);
         $self = new static();
-        $stmt = $self->execute("SELECT `id` FROM `$table_name` WHERE `id`=?", array($id));
+        $stmt = $self->db->execute("SELECT `id` FROM `$table_name` WHERE `id`=?", array($id));
         if($stmt ->fetchAll()) {
             return TRUE;
         } else {
@@ -134,8 +138,8 @@ class Stalker_Seeder extends Stalker_Database {
         $columns = rtrim($columns,',');
         $values = rtrim($values,',');
 
-        $stmt = $self->execute("INSERT INTO `$table_name` ($columns) VALUES($values)", $args);
-        return $self->lastInsertId();
+        $stmt = $self->db->execute("INSERT INTO `$table_name` ($columns) VALUES($values)", $args);
+        return $self->db->lastInsertId();
     }
 
     protected static function update_seed_row($table_name, array $data) {
@@ -157,7 +161,7 @@ class Stalker_Seeder extends Stalker_Database {
             $args[":$key"] = $value;
         }
         $set = rtrim($set,',');
-        $stmt = $self->execute("UPDATE `$table_name` SET $set WHERE `id`=:id LIMIT 1;", $args);
+        $stmt = $self->db->execute("UPDATE `$table_name` SET $set WHERE `id`=:id LIMIT 1;", $args);
         return true;
     }
 
@@ -170,7 +174,7 @@ class Stalker_Seeder extends Stalker_Database {
         } else {
             $args[':main_seed'] = 0;
         }
-        $stmt = $self->execute("DELETE FROM `$table_name` WHERE `$seed_col`=:main_seed;", $args);
+        $stmt = $self->db->execute("DELETE FROM `$table_name` WHERE `$seed_col`=:main_seed;", $args);
         return true;
     }
 }

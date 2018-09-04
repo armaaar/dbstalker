@@ -1,7 +1,15 @@
 <?php
 
-class Stalker_Migrator extends Stalker_Database
+class Stalker_Migrator
 {
+    protected $db;
+	protected $connection;
+
+    protected function __construct() {
+        $this->db = Stalker_Database::instance();
+		$this->connection = Stalker_Configuration::database_connection();
+    }
+
     public static function table_need_migration(Stalker_Table $table) {
         if(!self::database_table_exist($table->table_name)) {
             return TRUE;
@@ -63,7 +71,7 @@ class Stalker_Migrator extends Stalker_Database
 
     protected static function get_database_tables(){
         $self = new static();
-        $stmt = $self->execute("SELECT TABLE_NAME
+        $stmt = $self->db->execute("SELECT TABLE_NAME
                                 FROM INFORMATION_SCHEMA.TABLES
                                 WHERE TABLE_SCHEMA = ?",
                             array($self->connection->database));
@@ -78,7 +86,7 @@ class Stalker_Migrator extends Stalker_Database
     protected static function get_table_description($table_name){
         $self = new static();
 
-        $stmt = $self->execute("DESCRIBE `$table_name`");
+        $stmt = $self->db->execute("DESCRIBE `$table_name`");
         $stmt->setFetchMode(PDO::FETCH_ASSOC);
         $results = $stmt ->fetchAll();
         if(!$results) {
@@ -299,7 +307,7 @@ class Stalker_Migrator extends Stalker_Database
         }
         $query = substr($query, 0, -1);
         $settings = Stalker_Configuration::table_settings();
-        $self->execute("CREATE TABLE IF NOT EXISTS `$table_name` ($query)
+        $self->db->execute("CREATE TABLE IF NOT EXISTS `$table_name` ($query)
                         ENGINE={$settings->engine}
                         CHARACTER SET {$settings->charset}
                         COLLATE {$settings->collation}");
@@ -390,7 +398,7 @@ class Stalker_Migrator extends Stalker_Database
             }
 
             $query = substr($query, 0, -1);
-            $self->execute("ALTER TABLE `{$table->table_name}` $drop_pri $query;");
+            $self->db->execute("ALTER TABLE `{$table->table_name}` $drop_pri $query;");
         }
         return TRUE;
     }

@@ -1,6 +1,6 @@
 <?php
 
-class Stalker_Database extends Stalker_Singleton {
+class Stalker_Database {
 
 	protected $db;
 	protected $connection;
@@ -15,12 +15,41 @@ class Stalker_Database extends Stalker_Singleton {
 	/**
 	 * @var int the current transaction depth
 	 */
-	protected $_transactionDepth = 0;
+    protected $_transactionDepth = 0;
 
+    // Use singleton structure to only open 1 db connection
+    /**
+     * Call this method to get singleton
+     */
+    public static function instance()
+    {
+      static $instance = null;
+      if( $instance === null )
+      {
+        // Late static binding (PHP 5.3+)
+        $instance = new static();
+      }
+
+      return $instance;
+    }
+    /**
+     * Make clone magic method private, so nobody can clone instance.
+     */
+    private function __clone() {}
+
+    /**
+     * Make sleep magic method private, so nobody can serialize instance.
+     */
+    private function __sleep() {}
+
+    /**
+     * Make wakeup magic method private, so nobody can unserialize instance.
+     */
+    private function __wakeup() {}
 	/**
 	 * Make constructor protected, so nobody can call "new Class" but children.
 	 */
-	protected function __construct() {
+	private function __construct() {
 		$this -> connection = Stalker_Configuration::database_connection();
 		$this -> db = new PDO('mysql:host=' . $this -> connection -> host . ';dbname=' . $this -> connection -> database . ';charset=utf8', $this -> connection -> user, $this -> connection -> password);
 		$this -> db -> setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -97,7 +126,7 @@ class Stalker_Database extends Stalker_Singleton {
 		}
 	}
 
-	protected function execute($query, $args = array())
+	public function execute($query, $args = array())
 	{
 		if(empty($query))
 		{
@@ -120,7 +149,7 @@ class Stalker_Database extends Stalker_Singleton {
 	  	return $stmt;
 	}
 
-	protected function lastInsertId($name = null)
+	public function lastInsertId($name = null)
 	{
 	  return $this -> db -> lastInsertId($name);
 	}
