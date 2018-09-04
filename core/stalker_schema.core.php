@@ -12,9 +12,9 @@ class Stalker_Schema{
 
     public static function build(Closure $callable){
         $self = new static();
-        $callable($self);
         // add primary id
         $self->id("id")->primary();
+        $callable($self);
         // check if table has seeds
         $trace = debug_backtrace();
         $caller = $trace[1];
@@ -85,7 +85,7 @@ class Stalker_Schema{
                 && Stalker_Validator::regexCheck($points, 'number')
                 && (int)$digits >= (int)$points)
         {
-            $this->table_structure[$name]['type'] = array('float', "$digits, $points");
+            $this->table_structure[$name]['type'] = array('float', "$digits,$points");
         } else {
             $this->table_structure[$name]['type'] = array('float');
         }
@@ -100,7 +100,7 @@ class Stalker_Schema{
                 && Stalker_Validator::regexCheck($points, 'number')
                 && (int)$digits >= (int)$points)
         {
-            $this->table_structure[$name]['type'] = array('double', "$digits, $points");
+            $this->table_structure[$name]['type'] = array('double', "$digits,$points");
         } else {
             $this->table_structure[$name]['type'] = array('double');
         }
@@ -111,7 +111,7 @@ class Stalker_Schema{
 
     public function decimal($name, $digits, $points){
         $this->table_structure[$name] = array();
-        $this->table_structure[$name]['type'] = array('decimal', "$digits, $points");
+        $this->table_structure[$name]['type'] = array('decimal', "$digits,$points");
         $this->table_structure[$name]['validator'] = "float";
         $this->last_col = $name;
         return $this;

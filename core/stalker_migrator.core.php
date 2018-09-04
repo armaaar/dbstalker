@@ -66,6 +66,7 @@ class Stalker_Migrator
                 self::table_migrate($table);
             }
         }
+        self::migrate_views();
         return TRUE;
     }
 
@@ -97,7 +98,10 @@ class Stalker_Migrator
 
     protected static function database_table_exist($table_name) {
         $existing_tables = self::get_database_tables();
-        return in_array($table_name, $existing_tables);
+        if($existing_tables) {
+            return in_array($table_name, $existing_tables);
+        }
+        return false;
     }
 
     protected static function table_migration_info(Stalker_Table $table, $return_errors=false) {
@@ -400,6 +404,24 @@ class Stalker_Migrator
             $query = substr($query, 0, -1);
             $self->db->execute("ALTER TABLE `{$table->table_name}` $drop_pri $query;");
         }
+        return TRUE;
+    }
+
+    public static function migrate_views() {
+        $views = Stalker_Registerar::get_registerd_views();
+        if($views) {
+            foreach ($views as $view_name => $view) {
+                self::view_migrate($view);
+            }
+        }
+        return TRUE;
+    }
+
+    public static function view_migrate(Stalker_View $view) {
+        $self = new static();
+        $view_name = $view->view_name;
+        $query = $view->query();
+        $self->db->execute("CREATE OR REPLACE VIEW `$view_name` AS ($query);");
         return TRUE;
     }
 }

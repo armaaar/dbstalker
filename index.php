@@ -7,6 +7,7 @@ include_once './core/stalker_database.core.php';
 include_once './core/stalker_table.core.php';
 include_once './core/stalker_seed.core.php';
 include_once './core/stalker_seeder.core.php';
+include_once './core/stalker_view.core.php';
 include_once './core/stalker_migrator.core.php';
 
 foreach ( glob("./tables/*.table.php") as $file ) {
@@ -20,6 +21,10 @@ foreach ( glob("./views/*.view.php") as $file ) {
 foreach ( glob("./seeds/*.seed.php") as $file ) {
 	require_once $file;
 }
+
+ini_set('xdebug.var_display_max_depth', -1);
+ini_set('xdebug.var_display_max_children', -1);
+ini_set('xdebug.var_display_max_data', -1);
 
 Stalker_Registerar::auto_register();
 /*

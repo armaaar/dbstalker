@@ -10,7 +10,7 @@ class Stalker_Table
     //register the table
     $this->table_name = strtolower(get_class($this));
     if(!Stalker_Registerar::is_table_registered($this->table_name)){
-      Stalker_Registerar::register($this->table_name, $this);
+      Stalker_Registerar::register_table($this->table_name, $this);
     }
 
     $this -> db = Stalker_Database::instance();
