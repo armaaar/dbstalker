@@ -61,7 +61,8 @@ class Stalker_Configuration {
                     $settings->collation = self::COLLATION;
                 } else {
                     $settings->collate = self::$configuration->settings->collate;
-                    $settings->charset = (explode("_",self::$configuration->settings->collate))[0];
+                    $settings->charset = explode("_",self::$configuration->settings->collate);
+                    $settings->charset = $settings->charset[0];
                 }
             }
             return $settings;

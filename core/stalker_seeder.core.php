@@ -2,7 +2,7 @@
 
 class Stalker_Seeder extends Stalker_Database {
 
-    public static function seed_main_seeds(bool $force_seed = FALSE) {
+    public static function seed_main_seeds($force_seed = FALSE) {
         $seeds = Stalker_Registerar::get_seeds();
         if($seeds) {
             foreach ($seeds as $table_name => $seed) {
@@ -22,7 +22,7 @@ class Stalker_Seeder extends Stalker_Database {
         return TRUE;
     }
 
-    public static function seed_table_main_seeds(string $table_name, bool $force_seed = FALSE) {
+    public static function seed_table_main_seeds($table_name, $force_seed = FALSE) {
         $seed = Stalker_Registerar::get_table_seed($table_name);
         if($seed) {
             self::table_seed($table_name, $seed, TRUE, $force_seed);
@@ -32,7 +32,7 @@ class Stalker_Seeder extends Stalker_Database {
         return TRUE;
     }
 
-    public static function delete_table_main_seeds(string $table_name) {
+    public static function delete_table_main_seeds($table_name) {
         return self::table_delete_seed($table_name, TRUE);
     }
 
@@ -56,7 +56,7 @@ class Stalker_Seeder extends Stalker_Database {
         return TRUE;
     }
 
-    public static function seed_table_temporary_seeds(string $table_name) {
+    public static function seed_table_temporary_seeds($table_name) {
         $seed = Stalker_Registerar::get_table_seed($table_name);
         if($seed) {
             self::table_seed($table_name, $seed, FALSE);
@@ -66,11 +66,11 @@ class Stalker_Seeder extends Stalker_Database {
         return TRUE;
     }
 
-    public static function delete_table_temporary_seeds(string $table_name) {
+    public static function delete_table_temporary_seeds($table_name) {
         return self::table_delete_seed($table_name, FALSE);
     }
 
-    protected static function table_seed(string $table_name, Stalker_Seed $seed, bool $main_seed, bool $force_seed = FALSE) {
+    protected static function table_seed($table_name, Stalker_Seed $seed, $main_seed, $force_seed = FALSE) {
         if($main_seed) {
             $data = $seed->main_seed();
         } else {
@@ -103,7 +103,7 @@ class Stalker_Seeder extends Stalker_Database {
         }
     }
 
-    protected static function seed_exists(string $table_name, int $id) {
+    protected static function seed_exists($table_name, $id) {
         $table_name = strtolower($table_name);
         $self = new static();
         $stmt = $self->execute("SELECT `id` FROM `$table_name` WHERE `id`=?", array($id));
@@ -114,7 +114,7 @@ class Stalker_Seeder extends Stalker_Database {
         }
     }
 
-    protected static function insert_seed_row(string $table_name, array $data) {
+    protected static function insert_seed_row($table_name, array $data) {
         $table_name = strtolower($table_name);
         $self = new static();
         $args=[];
@@ -138,7 +138,7 @@ class Stalker_Seeder extends Stalker_Database {
         return $self->lastInsertId();
     }
 
-    protected static function update_seed_row(string $table_name, array $data) {
+    protected static function update_seed_row($table_name, array $data) {
         $table_name = strtolower($table_name);
         $self = new static();
         $args=[];
@@ -161,7 +161,7 @@ class Stalker_Seeder extends Stalker_Database {
         return true;
     }
 
-    protected static function table_delete_seed(string $table_name, bool $main_seed) {
+    protected static function table_delete_seed($table_name, $main_seed) {
         $table_name = strtolower($table_name);
         $self = new static();
         $seed_col = Stalker_Schema::SEED_COLUMN;

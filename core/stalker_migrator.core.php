@@ -75,7 +75,7 @@ class Stalker_Migrator extends Stalker_Database
         return array_column($results, 'TABLE_NAME');
     }
 
-    protected static function get_table_description(string $table_name){
+    protected static function get_table_description($table_name){
         $self = new static();
 
         $stmt = $self->execute("DESCRIBE `$table_name`");
@@ -106,7 +106,10 @@ class Stalker_Migrator extends Stalker_Database
                 continue;
             }
             $sync_cols[] = $name;
-            preg_match('/^(\w+)\(?([^)]+)?\)?/', $existing_table_fields[$key]['Type'], $matches, PREG_UNMATCHED_AS_NULL);
+            preg_match('/^(\w+)\(?([^)]+)?\)?/', $existing_table_fields[$key]['Type'], $matches);
+            if(!array_key_exists(2, $matches)) {
+                $matches[2] = NULL;
+            }
             if($matches[1] != $col['type'][0]) {
                 if(!$return_errors) {
                     return TRUE;

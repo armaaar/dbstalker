@@ -6,7 +6,7 @@ class Stalker_Registerar{
 
     private function __construct() {}
 
-    public static function register(string $table_name, Stalker_Table $table){
+    public static function register($table_name, Stalker_Table $table){
         $table_name = strtolower($table_name);
         if(!self::is_table_registered($table_name)) {
             self::$list_of_tables[$table_name]=$table;
@@ -18,15 +18,15 @@ class Stalker_Registerar{
          return self::$list_of_tables;
     }
 
-    public static function is_table_registered(string $table_name){
+    public static function is_table_registered($table_name){
         return array_key_exists(strtolower($table_name), self::$list_of_tables);
     }
 
-    public static function table_has_seed(string $table_name){
+    public static function table_has_seed($table_name){
         return array_key_exists(strtolower($table_name), self::$list_of_seeds);
     }
 
-    public static function get_table_seed(string $table_name){
+    public static function get_table_seed($table_name){
         $table_name = strtolower($table_name);
         if(self::table_has_seed($table_name)) {
             return self::$list_of_seeds[$table_name];
@@ -46,7 +46,7 @@ class Stalker_Registerar{
         }
     }
 
-    protected static function register_seed(string $table_name){
+    protected static function register_seed($table_name){
         $table_name = strtolower($table_name);
         if(self::is_table_registered($table_name) && !self::table_has_seed($table_name)) {
             $seed_class_name = $table_name."_seed";

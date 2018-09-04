@@ -19,14 +19,14 @@ class Stalker_Schema{
         $trace = debug_backtrace();
         $caller = $trace[1];
         if(Stalker_Registerar::table_has_seed($caller['class'])) {
-            $self->boolean(self::SEED_COLUMN)->nullable()->default(NULL);
+            $self->boolean(self::SEED_COLUMN)->nullable()->def(NULL);
         }
         //return schema
         return $self->table_structure;
     }
 
     // col Types
-    public function int(string $name, int $length){
+    public function int($name, $length){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('int', $length);
         $this->table_structure[$name]['validator'] = "number";
@@ -34,28 +34,28 @@ class Stalker_Schema{
         return $this;
     }
 
-    public function varchar(string $name, int $length){
+    public function varchar($name, $length){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('varchar', $length);
         $this->last_col = $name;
         return $this;
     }
 
-    public function text(string $name){
+    public function text($name){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('text');
         $this->last_col = $name;
         return $this;
     }
 
-    public function enum(string $name, array $vals){
+    public function enum($name, array $vals){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('enum', $vals);
         $this->last_col = $name;
         return $this;
     }
 
-    public function date(string $name){
+    public function date($name){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('date');
         $this->table_structure[$name]['validator'] = "date";
@@ -63,7 +63,7 @@ class Stalker_Schema{
         return $this;
     }
 
-    public function time(string $name){
+    public function time($name){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('time');
         $this->table_structure[$name]['validator'] = "24hours";
@@ -71,7 +71,7 @@ class Stalker_Schema{
         return $this;
     }
 
-    public function datetime(string $name){
+    public function datetime($name){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('datetime');
         $this->table_structure[$name]['validator'] = "datetime";
@@ -79,7 +79,7 @@ class Stalker_Schema{
         return $this;
     }
 
-    public function float(string $name, $digits=null, $points=null){
+    public function float($name, $digits=null, $points=null){
         $this->table_structure[$name] = array();
         if(Stalker_Validator::regexCheck($digits, 'number')
                 && Stalker_Validator::regexCheck($points, 'number')
@@ -94,7 +94,7 @@ class Stalker_Schema{
         return $this;
     }
 
-    public function double(string $name, $digits=null, $points=null){
+    public function double($name, $digits=null, $points=null){
         $this->table_structure[$name] = array();
         if(Stalker_Validator::regexCheck($digits, 'number')
                 && Stalker_Validator::regexCheck($points, 'number')
@@ -109,7 +109,7 @@ class Stalker_Schema{
         return $this;
     }
 
-    public function decimal(string $name, int $digits, int $points){
+    public function decimal($name, $digits, $points){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('decimal', "$digits, $points");
         $this->table_structure[$name]['validator'] = "float";
@@ -117,47 +117,47 @@ class Stalker_Schema{
         return $this;
     }
 
-    public function boolean(string $name){
+    public function boolean($name){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('tinyint', 1);
         $this->last_col = $name;
         return $this;
     }
 
-    public function id(string $name){
+    public function id($name){
         $this->int($name, $this->lengths->id);
         $this->table_structure[$this->last_col]['validator'] = "id";
         return $this;
     }
 
-    public function email(string $name){
+    public function email($name){
         $this->varchar($name, $this->lengths->email);
         $this->table_structure[$this->last_col]['validator'] = "email";
         return $this;
     }
 
-    public function password(string $name){
+    public function password($name){
         return $this->varchar($name, $this->lengths->password);
     }
 
-    public function phone(string $name){
+    public function phone($name){
         $this->varchar($name, $this->lengths->phone);
         $this->table_structure[$this->last_col]['validator'] = "phone";
         return $this;
     }
 
-    public function ip(string $name){
+    public function ip($name){
         return $this->varchar($name, $this->lengths->ip);
     }
 
-    public function link(string $name){
+    public function link($name){
         $this->varchar($name, $this->lengths->link);
         $this->table_structure[$this->last_col]['validator'] = "link";
         return $this;
     }
 
     // additional attributes
-    public function default($val){
+    public function def($val){
         if(!in_array(gettype($val), array('boolean', 'string', 'integer', 'double', 'NULL'))) {
             trigger_error("Default value for column '{$this->last_col}' of unknown type ".gettype($val), E_USER_ERROR);
 			die();
