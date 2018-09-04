@@ -40,6 +40,29 @@ class Stalker_Migrator
         return FALSE;
     }
 
+    public static function migrate($drop_extra=TRUE) {
+        // migrate defined tables
+        $tables = Stalker_Registerar::get_registerd_tables();
+        if($tables) {
+            foreach ($tables as $table_name => $table) {
+                self::table_migrate($table);
+            }
+        }
+        // drop additional db tables
+        if($drop_extra) {
+            $existing_tables = self::get_database_tables();
+            $tables_to_drop = array_diff($existing_tables, array_keys($tables));
+            if($tables_to_drop) {
+                foreach ($tables_to_drop as $table_name) {
+                    self::drop_table($table_name);
+                }
+            }
+        }
+        // migrate defined views
+        self::migrate_views($drop_extra);
+        return TRUE;
+    }
+
     public static function need_migration_data() {
         $tables = Stalker_Registerar::get_registerd_tables();
         if($tables) {
@@ -59,22 +82,27 @@ class Stalker_Migrator
         return FALSE;
     }
 
-    public static function migrate() {
-        $tables = Stalker_Registerar::get_registerd_tables();
-        if($tables) {
-            foreach ($tables as $table_name => $table) {
-                self::table_migrate($table);
-            }
-        }
-        self::migrate_views();
-        return TRUE;
-    }
-
     protected static function get_database_tables(){
         $self = new static();
         $stmt = $self->db->execute("SELECT TABLE_NAME
                                 FROM INFORMATION_SCHEMA.TABLES
-                                WHERE TABLE_SCHEMA = ?",
+                                WHERE TABLE_SCHEMA = ?
+                                    AND TABLE_TYPE = 'BASE TABLE'",
+                            array($self->connection->database));
+        $stmt->setFetchMode(PDO::FETCH_ASSOC);
+        $results = $stmt ->fetchAll();
+        if(!$results) {
+            return NULL;
+        }
+        return array_column($results, 'TABLE_NAME');
+    }
+
+    protected static function get_database_views(){
+        $self = new static();
+        $stmt = $self->db->execute("SELECT TABLE_NAME
+                                FROM INFORMATION_SCHEMA.TABLES
+                                WHERE TABLE_SCHEMA = ?
+                                    AND TABLE_TYPE = 'VIEW'",
                             array($self->connection->database));
         $stmt->setFetchMode(PDO::FETCH_ASSOC);
         $results = $stmt ->fetchAll();
@@ -407,11 +435,29 @@ class Stalker_Migrator
         return TRUE;
     }
 
-    public static function migrate_views() {
+    protected static function drop_table($table_name) {
+        $self = new static();
+        $self->db->execute("DROP TABLE `$table_name`;");
+        return TRUE;
+    }
+
+    // views
+    public static function migrate_views($drop_extra=TRUE) {
+        // migrate defined views
         $views = Stalker_Registerar::get_registerd_views();
         if($views) {
             foreach ($views as $view_name => $view) {
                 self::view_migrate($view);
+            }
+        }
+        // drop additional db views
+        if($drop_extra) {
+            $existing_views = self::get_database_views();
+            $views_to_drop = array_diff($existing_views, array_keys($views));
+            if($views_to_drop) {
+                foreach ($views_to_drop as $view_name) {
+                    self::drop_view($view_name);
+                }
             }
         }
         return TRUE;
@@ -422,6 +468,12 @@ class Stalker_Migrator
         $view_name = $view->view_name;
         $query = $view->query();
         $self->db->execute("CREATE OR REPLACE VIEW `$view_name` AS ($query);");
+        return TRUE;
+    }
+
+    protected static function drop_view($view_name) {
+        $self = new static();
+        $self->db->execute("DROP VIEW `$view_name`;");
         return TRUE;
     }
 }
