@@ -467,7 +467,7 @@ class Stalker_Migrator
         $self = new static();
         $view_name = $view->view_name;
         $query = $view->query();
-        $self->db->execute("CREATE OR REPLACE VIEW `$view_name` AS ($query);");
+        $self->db->execute("CREATE OR REPLACE VIEW `$view_name` AS $query;");
         return TRUE;
     }
 
