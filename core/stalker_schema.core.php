@@ -33,6 +33,34 @@ class Stalker_Schema{
         $this->last_col = $name;
         return $this;
     }
+    public function tinyint($name, $length){
+        $this->table_structure[$name] = array();
+        $this->table_structure[$name]['type'] = array('tinyint', $length);
+        $this->table_structure[$name]['validator'] = "number";
+        $this->last_col = $name;
+        return $this;
+    }
+    public function smallint($name, $length){
+        $this->table_structure[$name] = array();
+        $this->table_structure[$name]['type'] = array('smallint', $length);
+        $this->table_structure[$name]['validator'] = "number";
+        $this->last_col = $name;
+        return $this;
+    }
+    public function mediumint($name, $length){
+        $this->table_structure[$name] = array();
+        $this->table_structure[$name]['type'] = array('mediumint', $length);
+        $this->table_structure[$name]['validator'] = "number";
+        $this->last_col = $name;
+        return $this;
+    }
+    public function bigint($name, $length){
+        $this->table_structure[$name] = array();
+        $this->table_structure[$name]['type'] = array('bigint', $length);
+        $this->table_structure[$name]['validator'] = "number";
+        $this->last_col = $name;
+        return $this;
+    }
 
     public function varchar($name, $length){
         $this->table_structure[$name] = array();
@@ -118,14 +146,11 @@ class Stalker_Schema{
     }
 
     public function boolean($name){
-        $this->table_structure[$name] = array();
-        $this->table_structure[$name]['type'] = array('tinyint', 1);
-        $this->last_col = $name;
-        return $this;
+        return $this->tinyint($name, 1);
     }
 
     public function id($name){
-        $this->int($name, $this->lengths->id);
+        $this->int($name, $this->lengths->id)->unsigned();
         $this->table_structure[$this->last_col]['validator'] = "id";
         return $this;
     }
@@ -174,6 +199,20 @@ class Stalker_Schema{
         return $this;
     }
 
+    public function unsigned(){
+        if($this->has_numeric_type($this->last_col)) {
+            $this->table_structure[$this->last_col]['attribute'] = "unsigned";
+        }
+        return $this;
+    }
+
+    public function unsigned_zerofill(){
+        if($this->has_numeric_type($this->last_col)) {
+            $this->table_structure[$this->last_col]['attribute'] = "unsigned zerofill";
+        }
+        return $this;
+    }
+
     public function primary(){
         $this->table_structure[$this->last_col]['key'] = 'PRI';
         $this->table_structure[$this->last_col]['ai'] = TRUE;
@@ -188,5 +227,15 @@ class Stalker_Schema{
     public function unique(){
         $this->table_structure[$this->last_col]['key'] = 'UNI';
         return $this;
+    }
+
+    // helping functions
+    protected function has_numeric_type($col_name) {
+        if(in_array($this->table_structure[$col_name]["type"][0],
+            array('int', 'bigint', 'mediumint', 'smallint', 'tinyint', 'float', 'double', 'decimal'))
+        ) {
+            return TRUE;
+        }
+        return FALSE;
     }
 }

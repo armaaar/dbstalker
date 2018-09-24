@@ -9,6 +9,8 @@ class Test extends Stalker_Table
             $table->decimal("f3", 10, 0);
             $table->double("f4");
             $table->id("id2")->index();
+            $table->bigint("bigger",20)->unsigned_zerofill();
+            $table->smallint("smaller",5)->unsigned();
         });
     }
 }

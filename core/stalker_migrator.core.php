@@ -146,9 +146,12 @@ class Stalker_Migrator
                 continue;
             }
             $sync_cols[] = $name;
-            preg_match('/^(\w+)\(?([^)]+)?\)?/', $existing_table_fields[$key]['Type'], $matches);
+            preg_match('/^(\w+)(?:\((.+)?\))?\s?(.+(?!\)))?/', $existing_table_fields[$key]['Type'], $matches);
             if(!array_key_exists(2, $matches)) {
                 $matches[2] = NULL;
+            }
+            if(!array_key_exists(3, $matches)) {
+                $matches[3] = NULL;
             }
             if($matches[1] != $col['type'][0]) {
                 if(!$return_errors) {
@@ -175,6 +178,17 @@ class Stalker_Migrator
                     $errors[$name] = array("modify", $col, $existing_table_fields[$key]);
                     continue;
                 }
+            }
+
+            if(!array_key_exists('attribute', $col) && !is_null($matches[3])
+            || array_key_exists('attribute', $col) && is_null($matches[3])
+            || array_key_exists('attribute', $col) && !is_null($matches[3])
+                && strtolower($matches[3]) != strtolower($col['attribute'])) {
+                if(!$return_errors) {
+                    return TRUE;
+                }
+                $errors[$name] = array("modify", $col, $existing_table_fields[$key]);
+                continue;
             }
 
             if(array_key_exists('null', $col) && $col['null']) {
@@ -279,6 +293,9 @@ class Stalker_Migrator
                 }
                 $query .= "({$col['type'][1]})";
             }
+            if(array_key_exists('attribute', $col)) {
+                $query .= " ".$col['attribute'];
+            }
             if(array_key_exists('null', $col) && $col['null']) {
                 $query .= " NULL";
             } else {
@@ -361,6 +378,9 @@ class Stalker_Migrator
                         }
                         $query .= "({$col[1]['type'][1]})";
                     }
+                    if(array_key_exists('attribute', $col[1])) {
+                        $query .= " ".$col[1]['attribute'];
+                    }
                     if(array_key_exists('null', $col[1]) && $col[1]['null']) {
                         $query .= " NULL";
                     } else {
@@ -394,11 +414,7 @@ class Stalker_Migrator
                     if(array_key_exists('ai', $col[1]) && $col[1]['ai']) {
                         $query .= " AUTO_INCREMENT";
                     }
-                } else {
-                    $query .= "DROP COLUMN `$name`";
-                }
 
-                if($col[0] != 'drop') {
                     if(array_key_exists('key', $col[1])) {
                         if($col[1]['key'] != $col[2]['Key']) {
                             if($col[2]['Key'])
@@ -425,6 +441,8 @@ class Stalker_Migrator
                             $query .= ", DROP INDEX `$name`";
                         }
                     }
+                } else {
+                    $query .= "DROP COLUMN `$name`";
                 }
                 $query .= ",";
             }
