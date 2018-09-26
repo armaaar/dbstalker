@@ -1,14 +1,7 @@
 <?php
 
-class Stalker_Migrator
+class Stalker_Migrator extends Information_Schema
 {
-    protected $db;
-	protected $connection;
-
-    protected function __construct() {
-        $this->db = Stalker_Database::instance();
-		$this->connection = Stalker_Configuration::database_connection();
-    }
 
     public static function table_need_migration(Stalker_Table $table) {
         if(!self::database_table_exist($table->table_name)) {
@@ -80,48 +73,6 @@ class Stalker_Migrator
             return $data;
         }
         return FALSE;
-    }
-
-    protected static function get_database_tables(){
-        $self = new static();
-        $stmt = $self->db->execute("SELECT TABLE_NAME
-                                FROM INFORMATION_SCHEMA.TABLES
-                                WHERE TABLE_SCHEMA = ?
-                                    AND TABLE_TYPE = 'BASE TABLE'",
-                            array($self->connection->database));
-        $stmt->setFetchMode(PDO::FETCH_ASSOC);
-        $results = $stmt ->fetchAll();
-        if(!$results) {
-            return NULL;
-        }
-        return array_column($results, 'TABLE_NAME');
-    }
-
-    protected static function get_database_views(){
-        $self = new static();
-        $stmt = $self->db->execute("SELECT TABLE_NAME
-                                FROM INFORMATION_SCHEMA.TABLES
-                                WHERE TABLE_SCHEMA = ?
-                                    AND TABLE_TYPE = 'VIEW'",
-                            array($self->connection->database));
-        $stmt->setFetchMode(PDO::FETCH_ASSOC);
-        $results = $stmt ->fetchAll();
-        if(!$results) {
-            return NULL;
-        }
-        return array_column($results, 'TABLE_NAME');
-    }
-
-    protected static function get_table_description($table_name){
-        $self = new static();
-
-        $stmt = $self->db->execute("DESCRIBE `$table_name`");
-        $stmt->setFetchMode(PDO::FETCH_ASSOC);
-        $results = $stmt ->fetchAll();
-        if(!$results) {
-            return NULL;
-        }
-        return $results;
     }
 
     protected static function database_table_exist($table_name) {

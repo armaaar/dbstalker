@@ -7,7 +7,7 @@ class Test extends Stalker_Table
             $table->float("f1");
             $table->double("f2");
             $table->decimal("f3", 10, 0);
-            $table->double("f4");
+            $table->double("f4")->unique();;
             $table->id("id2")->index();
             $table->bigint("bigger",20)->unsigned_zerofill();
             $table->smallint("smaller",5)->unsigned();

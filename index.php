@@ -8,7 +8,9 @@ include_once './core/stalker_table.core.php';
 include_once './core/stalker_seed.core.php';
 include_once './core/stalker_seeder.core.php';
 include_once './core/stalker_view.core.php';
+include_once './core/stalker_information_schema.core.php';
 include_once './core/stalker_migrator.core.php';
+include_once './core/stalker_backup.core.php';
 
 foreach ( glob("./tables/*.table.php") as $file ) {
     require_once $file;
@@ -32,7 +34,7 @@ var_dump(Stalker_Registerar::get_registerd_tables());
 var_dump(Stalker_Configuration::database_connection());
 var_dump(Stalker_Configuration::table_settings());
 var_dump(Stalker_Configuration::custom_feilds_lengths());
-*/
+
 $fa = Stalker_Migrator::need_migration_data();
 var_dump($fa);
 $fa = Stalker_Migrator::migrate();
@@ -46,4 +48,8 @@ $fa = Stalker_Seeder::delete_main_seeds();
 var_dump($fa);
 
 $fa = Stalker_Seeder::delete_temporary_seeds();
+var_dump($fa);
+*/
+
+$fa = Stalker_Backup::create_backup();
 var_dump($fa);
