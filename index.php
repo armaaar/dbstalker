@@ -51,5 +51,5 @@ $fa = Stalker_Seeder::delete_temporary_seeds();
 var_dump($fa);
 */
 
-$fa = Stalker_Backup::create_backup();
+$fa = Stalker_Backup::restore_backup();
 var_dump($fa);

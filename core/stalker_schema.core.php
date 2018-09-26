@@ -109,8 +109,8 @@ class Stalker_Schema{
 
     public function float($name, $digits=null, $points=null){
         $this->table_structure[$name] = array();
-        if(Stalker_Validator::regexCheck($digits, 'number')
-                && Stalker_Validator::regexCheck($points, 'number')
+        if(Stalker_Validator::regex_check($digits, 'number')
+                && Stalker_Validator::regex_check($points, 'number')
                 && (int)$digits >= (int)$points)
         {
             $this->table_structure[$name]['type'] = array('float', "$digits,$points");
@@ -124,8 +124,8 @@ class Stalker_Schema{
 
     public function double($name, $digits=null, $points=null){
         $this->table_structure[$name] = array();
-        if(Stalker_Validator::regexCheck($digits, 'number')
-                && Stalker_Validator::regexCheck($points, 'number')
+        if(Stalker_Validator::regex_check($digits, 'number')
+                && Stalker_Validator::regex_check($points, 'number')
                 && (int)$digits >= (int)$points)
         {
             $this->table_structure[$name]['type'] = array('double', "$digits,$points");

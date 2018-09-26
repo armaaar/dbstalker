@@ -4,7 +4,7 @@ class Stalker_Validator
 {
     private function __construct() {}
 
-    public static function regexCheck($item,$type) {
+    public static function regex_check($item,$type) {
         if(empty($item) && $item !=0)
         {
             return false;
@@ -58,12 +58,12 @@ class Stalker_Validator
     {
         if($zero_allowed)
         {
-            if((empty($id) && $id !=0 ) || is_null($id) || !self::regexCheck($id, 'number'))
+            if((empty($id) && $id !=0 ) || is_null($id) || !self::regex_check($id, 'number'))
             {
                 return false;
             }
         } else {
-            if( empty($id) || is_null($id) || !self::regexCheck($id, 'number'))
+            if( empty($id) || is_null($id) || !self::regex_check($id, 'number'))
             {
                 return false;
             }
@@ -100,7 +100,7 @@ class Stalker_Validator
                             if(!self::is_id($table->{$name}, true)) {
                               $validation_errors[$name][] = "Invalid id";
                             }
-                        } elseif(!self::regexCheck($table->{$name}, $col['validator'])) {
+                        } elseif(!self::regex_check($table->{$name}, $col['validator'])) {
                             $validation_errors[$name][] = "Invalid value. Value must be a ".$col['validator'];
                         }
                     } elseif($col['type'][0] == 'enum' && !in_array($table->{$name}, $col['type'][1])) {

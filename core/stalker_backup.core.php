@@ -170,7 +170,7 @@ class Stalker_Backup extends Information_Schema
         $self = new static();
         $query = self::create_backup_query();
         $backup_dir = './backups';
-        $backup_file = "stalker-backup-{$self->connection->database}~".date("Y-m-d~His").".sql";
+        $backup_file = "stalker-backup~{$self->connection->database}~".date("Y-m-d~His").".sql";
         try {
             if (!file_exists($backup_dir)) {
                 mkdir($backup_dir, 0777, true);
@@ -180,6 +180,56 @@ class Stalker_Backup extends Information_Schema
 			trigger_error($caller['class']. "::" .$caller['function']. " -> " . $ex -> getMessage(), E_USER_ERROR);
             return FALSE;
         }
+        return TRUE;
+    }
+
+    public static function restore_backup($date=null) {
+        $self = new static();
+        $backup_file = null;
+        $max_date = "0000-00-00";
+        $max_series = "000000.sql";
+        foreach ( glob("./backups/*.sql") as $file ) {
+            $explosion = explode('~', $file);
+            $backup_database = $explosion[1];
+            $backup_date = $explosion[2];
+            $backup_series = $explosion[3];
+            // if the backup is for the right database
+            if($backup_database == $self->connection->database) {
+                // if a date is specified
+                if(Stalker_Validator::regex_check($date, 'date')) {
+                    if($backup_date == $date) {
+                        $backup_file = $file;
+                        break;
+                    }
+                } else { // get the latest backup
+                    if($backup_date > $max_date
+                    || $backup_date == $max_date && $backup_series > $max_series) {
+                        $max_date = $backup_date;
+                        $max_series = $backup_series;
+                        $backup_file = $file;
+                    }
+                }
+            }
+        }
+        if(is_null($backup_file)) {
+            return FALSE;
+        }
+        // get queries to run
+        $query = file_get_contents($backup_file);
+        $query_explode = explode('START TRANSACTION;', $query);
+        $query = $query_explode[1];
+        $query_explode = explode('COMMIT;', $query);
+        $query = $query_explode[0];
+        $query_explode = explode(';', $query);
+
+        // start transaction
+        $self->db->beginTransaction();
+        foreach ($query_explode as $partial_query) {
+            if(strlen(trim($partial_query)) != 0) {
+                $stmt = $self->db->execute($partial_query);
+            }
+        }
+        $self->db->commit();
         return TRUE;
     }
 }
