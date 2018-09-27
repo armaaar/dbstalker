@@ -16,5 +16,9 @@
     "phone": 20,
     "ip": 45,
     "link": 511
+  },
+  "backup": {
+      "perDay": -1,
+      "max": 10
   }
 }

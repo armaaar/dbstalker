@@ -171,10 +171,76 @@ class Stalker_Backup extends Information_Schema
         $query = self::create_backup_query();
         $backup_dir = './backups';
         $backup_file = "stalker-backup~{$self->connection->database}~".date("Y-m-d~His").".sql";
+
         try {
             if (!file_exists($backup_dir)) {
                 mkdir($backup_dir, 0777, true);
+            } elseif($self->backup_settings->per_day > 0 || $self->backup_settings->max > 0) {
+                $today = date("Y-m-d");
+                $today_backups = array();
+                $backups = array();
+                // get all database backups
+                foreach ( glob($backup_dir."/*.sql") as $file ) {
+                    $explosion = explode('~', $file);
+                    $backup_database = $explosion[1];
+                    $backup_date = $explosion[2];
+                    $backup_series = $explosion[3];
+                    // if the backup is for the right database
+                    if($backup_database == $self->connection->database) {
+                        $backups[$backup_date.$backup_series] = $file;
+                        // if there is another backup today
+                        if($backup_date == $today) {
+                            $today_backups[$backup_series] = $file;
+                        }
+                    }
+                }
+                // delete additional backups for today
+                if($self->backup_settings->per_day > 0) {
+                    if(!empty($today_backups)) {
+                        // +1 cause I'm gonna add another backup at the end of the function
+                        $files_to_delete = count($today_backups) - $self->backup_settings->per_day + 1;
+                        if($files_to_delete > 0) {
+                            // sort backups by series desc
+                            krsort($today_backups);
+                            for ($i=0; $i < $files_to_delete ; $i++) {
+                                // get file
+                                $file = end($today_backups);
+                                // get series
+                                $file_series = key($today_backups);
+                                // delete file from today backups array
+                                unset($today_backups[$file_series]);
+                                // delete file from database backups array
+                                unset($backups[$today.$file_series]);
+                                // delete backup
+                                unlink($file);
+                            }
+                        }
+                    }
+                }
+                // delete additional backups
+                if($self->backup_settings->max > 0) {
+                    if(!empty($backups)) {
+                        // +1 cause I'm gonna add another backup at the end of the function
+                        $files_to_delete = count($backups) - $self->backup_settings->max + 1;
+                        if($files_to_delete > 0) {
+                            // sort backups by date and series desc
+                            krsort($backups);
+                            for ($i=0; $i < $files_to_delete ; $i++) {
+                                // get file
+                                $file = end($backups);
+                                // get key
+                                $file_key = key($backups);
+                                // delete file from database backups array
+                                unset($backups[$file_key]);
+                                // delete backup
+                                unlink($file);
+                            }
+                        }
+                    }
+                }
+
             }
+            // create the backup file
             file_put_contents($backup_dir.'/'.$backup_file, $query, FILE_APPEND | LOCK_EX);
         } catch (Exception $ex) {
 			trigger_error($caller['class']. "::" .$caller['function']. " -> " . $ex -> getMessage(), E_USER_ERROR);

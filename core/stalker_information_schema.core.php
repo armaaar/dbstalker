@@ -9,6 +9,7 @@ class Information_Schema
     protected function __construct() {
         $this->db = Stalker_Database::instance();
 		$this->connection = Stalker_Configuration::database_connection();
+		$this->backup_settings = Stalker_Configuration::backup_settings();
         $this->version = array();
         $this->version['php'] = phpversion();
         $stmt = $this->db->execute("select version()");

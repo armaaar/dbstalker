@@ -13,6 +13,8 @@ class Stalker_Configuration {
     const PHONE_LENGTH = 20;
     const IP_LENGTH = 45;
     const LINK_LENGTH = 511;
+    const BACKUP_PER_DAY = -1;
+    const BACKUP_MAX = 10;
 
     private function __construct() {}
 
@@ -69,8 +71,6 @@ class Stalker_Configuration {
         });
     }
 
-
-
     public static function custom_feilds_lengths() {
         return self::public_decorator(function() {
             $lengths = new stdClass();
@@ -85,7 +85,7 @@ class Stalker_Configuration {
 
                 if(!property_exists(self::$configuration->customLengths, "id")
                 || property_exists(self::$configuration->customLengths, "id")
-                && Stalker_Validator::is_id(self::$configuration->customLengths->id)) {
+                && !Stalker_Validator::is_id(self::$configuration->customLengths->id)) {
                     $lengths->id = self::ID_LENGTH;
                 } else {
                     $lengths->id = self::$configuration->customLengths->id;
@@ -93,7 +93,7 @@ class Stalker_Configuration {
 
                 if(!property_exists(self::$configuration->customLengths, "email")
                 || property_exists(self::$configuration->customLengths, "email")
-                && Stalker_Validator::is_id(self::$configuration->customLengths->email)) {
+                && !Stalker_Validator::is_id(self::$configuration->customLengths->email)) {
                     $lengths->email = self::EMAIL_LENGTH;
                 } else {
                     $lengths->email = self::$configuration->customLengths->email;
@@ -101,7 +101,7 @@ class Stalker_Configuration {
 
                 if(!property_exists(self::$configuration->customLengths, "password")
                 || property_exists(self::$configuration->customLengths, "password")
-                && Stalker_Validator::is_id(self::$configuration->customLengths->password)) {
+                && !Stalker_Validator::is_id(self::$configuration->customLengths->password)) {
                     $lengths->password = self::PASSWORD_LENGTH;
                 } else {
                     $lengths->password = self::$configuration->customLengths->password;
@@ -109,7 +109,7 @@ class Stalker_Configuration {
 
                 if(!property_exists(self::$configuration->customLengths, "phone")
                 || property_exists(self::$configuration->customLengths, "phone")
-                && Stalker_Validator::is_id(self::$configuration->customLengths->phone)) {
+                && !Stalker_Validator::is_id(self::$configuration->customLengths->phone)) {
                     $lengths->phone = self::PHONE_LENGTH;
                 } else {
                     $lengths->phone = self::$configuration->customLengths->phone;
@@ -117,7 +117,7 @@ class Stalker_Configuration {
 
                 if(!property_exists(self::$configuration->customLengths, "ip")
                 || property_exists(self::$configuration->customLengths, "ip")
-                && Stalker_Validator::is_id(self::$configuration->customLengths->ip)) {
+                && !Stalker_Validator::is_id(self::$configuration->customLengths->ip)) {
                     $lengths->ip = self::IP_LENGTH;
                 } else {
                     $lengths->ip = self::$configuration->customLengths->ip;
@@ -125,7 +125,7 @@ class Stalker_Configuration {
 
                 if(!property_exists(self::$configuration->customLengths, "link")
                 || property_exists(self::$configuration->customLengths, "link")
-                && Stalker_Validator::is_id(self::$configuration->customLengths->link)) {
+                && !Stalker_Validator::is_id(self::$configuration->customLengths->link)) {
                     $lengths->link = self::LINK_LENGTH;
                 } else {
                     $lengths->link = self::$configuration->customLengths->link;
@@ -135,5 +135,31 @@ class Stalker_Configuration {
         });
     }
 
+    public static function backup_settings() {
+        return self::public_decorator(function() {
+            $settings = new stdClass();
+            if(!property_exists(self::$configuration, "backup")) {
+                $settings->max = self::BACKUP_MAX;
+                $settings->per_day = self::BACKUP_PER_DAY;
+            } else {
+                if(!property_exists(self::$configuration->backup, "max")
+                || property_exists(self::$configuration->backup, "max")
+                && !Stalker_Validator::is_id(self::$configuration->backup->max)) {
+                    $settings->max = self::BACKUP_MAX;
+                } else {
+                    $settings->max = self::$configuration->backup->max;
+                }
+
+                if(!property_exists(self::$configuration->backup, "perDay")
+                || property_exists(self::$configuration->backup, "perDay")
+                && !Stalker_Validator::is_id(self::$configuration->backup->perDay)) {
+                    $settings->per_day = self::BACKUP_PER_DAY;
+                } else {
+                    $settings->per_day = self::$configuration->backup->perDay;
+                }
+            }
+            return $settings;
+        });
+    }
 
 }

@@ -33,10 +33,10 @@ class Stalker_Validator
             $regex = '/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \+\*\-\_\?\&\;\%\=\.]*)*\/?$/i';
         } elseif ( $type == 'number')
         {
-            $regex = '/^\d+$/';
+            $regex = '/^-?\d+$/';
         } elseif ($type == 'float')
         {
-            $regex = '/^([0-9]*[.])?[0-9]*$/';
+            $regex = '/^-?([0-9]*[.])?[0-9]*$/';
         } elseif ( $type == '12hours')
         {
             $regex = '/(\d+)\s?:\s?(\d+)\s?(\w)/';
