@@ -85,6 +85,11 @@ class Stalker_Seeder {
                 trigger_error("Main seeds for table '$table_name' has no 'id' value.", E_USER_WARNING);
 			    continue;
             }
+            $row_force_seed = $force_seed;
+            if(array_key_exists('__forced', $row) && $row['__forced'] == TRUE) {
+                $row_force_seed = TRUE;
+                unset($row['__forced']);
+            }
             $table = new $table_name($row);
             $errors = $table->validate();
             if(!$errors) {
@@ -94,7 +99,7 @@ class Stalker_Seeder {
                     $row[Stalker_Schema::SEED_COLUMN] = 0;
                 }
                 if($main_seed && self::seed_exists($table_name, $row['id'])) {
-                    if($force_seed) {
+                    if($row_force_seed) {
                         self::update_seed_row($table_name, $row);
                     }
                 } else {

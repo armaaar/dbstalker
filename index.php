@@ -34,6 +34,7 @@ var_dump(Stalker_Registerar::get_registerd_tables());
 var_dump(Stalker_Configuration::database_connection());
 var_dump(Stalker_Configuration::table_settings());
 var_dump(Stalker_Configuration::custom_feilds_lengths());
+*/
 
 $fa = Stalker_Migrator::need_migration_data();
 var_dump($fa);
@@ -44,12 +45,12 @@ var_dump($fa);
 $fa = Stalker_Seeder::seed_temporary_seeds();
 var_dump($fa);
 
+$fa = Stalker_Seeder::delete_temporary_seeds();
+var_dump($fa);
+/*
 $fa = Stalker_Seeder::delete_main_seeds();
 var_dump($fa);
 
-$fa = Stalker_Seeder::delete_temporary_seeds();
-var_dump($fa);
-*/
-
 $fa = Stalker_Backup::restore_backup();
 var_dump($fa);
+*/

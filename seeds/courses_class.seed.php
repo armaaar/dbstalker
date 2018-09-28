@@ -5,6 +5,7 @@ class Courses_Class_Seed extends Stalker_Seed
     public function main_seed() {
         return array(
             array(
+                "__forced" => true,
                 "id" => 1,
                 "branch_id" => 5,
                 "min_kids" => 5
