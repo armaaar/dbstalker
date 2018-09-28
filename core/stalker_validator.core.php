@@ -4,11 +4,12 @@ class Stalker_Validator
 {
     private function __construct() {}
 
-    public static function regex_check($item,$type) {
+    public static function regex_check($item, $type) {
         if(empty($item) && $item !=0)
         {
             return false;
         }
+        $type = strtolower($type);
         $regex = NULL;
         if($type == 'email')
         {
