@@ -213,6 +213,11 @@ class Stalker_Schema{
         return $this;
     }
 
+    public function zero_allowed(){
+        $this->table_structure[$this->last_col]['validator'] = "zero_allowed_id";
+        return $this;
+    }
+
     public function primary(){
         $this->table_structure[$this->last_col]['key'] = 'PRI';
         $this->table_structure[$this->last_col]['ai'] = TRUE;

@@ -83,7 +83,7 @@ class Stalker_Validator
                 array_key_exists("key", $col)
                 && preg_match('/^(PRI)$/',$col["key"])
                 && array_key_exists("validator", $col)
-                && $col['validator'] == 'id'
+                && ($col['validator'] == 'id' || $col['validator'] == 'zero_allowed_id')
             );
 
             if(!property_exists($table, $name) && !$col_is_index && !array_key_exists("default", $col))
@@ -98,6 +98,10 @@ class Stalker_Validator
                     if(array_key_exists("validator", $col))
                     {
                         if($col['validator'] == 'id') {
+                            if(!self::is_id($table->{$name})) {
+                              $validation_errors[$name][] = "Invalid id";
+                            }
+                        } elseif($col['validator'] == 'zero_allowed_id') {
                             if(!self::is_id($table->{$name}, true)) {
                               $validation_errors[$name][] = "Invalid id";
                             }
