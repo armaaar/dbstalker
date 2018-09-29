@@ -249,11 +249,33 @@ class Stalker_Backup extends Information_Schema
         return TRUE;
     }
 
-    public static function restore_backup($date=null) {
+    public static function restore_backup($date=null, $series=null) {
         $self = new static();
         $backup_file = null;
         $max_date = "0000-00-00";
         $max_series = "000000.sql";
+
+        $date_valid = (!empty($date) && Stalker_Validator::regex_check($date, 'date'));
+        $series_valid = (
+            !empty($series) &&
+            Stalker_Validator::regex_check($series, 'number') &&
+            $series[0] != '-' &&
+            strlen($series) == 6
+        );
+
+        // check parameter errors
+        if(!$date_valid && !is_null($date)) {
+            return FALSE;
+        }
+        if($series_valid) {
+            if(!$date_valid) {
+                $series_valid = FALSE;
+            } else {
+                $series .= ".sql";
+            }
+        } elseif(!is_null($series)) {
+            return FALSE;
+        }
         foreach ( glob("./backups/*.sql") as $file ) {
             $explosion = explode('~', $file);
             $backup_database = $explosion[1];
@@ -261,11 +283,16 @@ class Stalker_Backup extends Information_Schema
             $backup_series = $explosion[3];
             // if the backup is for the right database
             if($backup_database == $self->connection->database) {
-                // if a date is specified
-                if(Stalker_Validator::regex_check($date, 'date')) {
-                    if($backup_date == $date) {
+                // if a date and series are specified
+                if($date_valid && $series_valid) {
+                    if($backup_date == $date && $backup_series == $series) {
                         $backup_file = $file;
                         break;
+                    }
+                } elseif($date_valid) {
+                    if($backup_date == $date && $backup_series > $max_series) {
+                        $max_series = $backup_series;
+                        $backup_file = $file;
                     }
                 } else { // get the latest backup
                     if($backup_date > $max_date
