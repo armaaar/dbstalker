@@ -102,9 +102,26 @@ if(isset($_POST['restoreBackup']) && isset($_POST['password']) && isset($_POST['
     .table-container {
         margin-top: 20px
     }
+    #loading {
+        display: none;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100vw;
+        line-height: 100vh;
+        background: #fff;
+        opacity: 0.8;
+        z-index: 10;
+        text-align: center;
+        vertical-align: middle;
+    }
 </style>
 <body>
-
+    <div id="loading">
+        Loading. Please wait until a message appear on the screan.
+    </div>
     <div class="container">
         <div class="row">
             <div class="col-xs-12">
@@ -144,8 +161,10 @@ if(isset($_POST['restoreBackup']) && isset($_POST['password']) && isset($_POST['
     <script>
         jQuery(document).ready(function ($){
             // login
+            $loading = $("#loading")
             $("form.password-container").on("submit", function(){
                 var password = $("#password").val();
+                $loading.fadeIn();
                 $.post("",
                 {
                     passwordForm : true,
@@ -176,6 +195,7 @@ if(isset($_POST['restoreBackup']) && isset($_POST['password']) && isset($_POST['
                         {
                             alert(data.state);
                         }
+                        $loading.fadeOut();
                     } else
                     {
                         alert("An unknown error happened. please refresh the page");
@@ -185,6 +205,7 @@ if(isset($_POST['restoreBackup']) && isset($_POST['password']) && isset($_POST['
             // create backup
             $(".create-backup").click(function(){
                 var password = $("#password").val();
+                $loading.fadeIn();
                 $.post("",
                 {
                     createBackup : true,
@@ -200,6 +221,7 @@ if(isset($_POST['restoreBackup']) && isset($_POST['password']) && isset($_POST['
                         {
                             alert(data);
                         }
+                        $loading.fadeOut();
                     } else
                     {
                         alert("An unknown error happened. please refresh the page");
@@ -210,6 +232,7 @@ if(isset($_POST['restoreBackup']) && isset($_POST['password']) && isset($_POST['
             $(document).on("click", ".restore-backup", function(){
                 var password = $("#password").val(),
                     series = $(this).attr("data-series");
+                $loading.fadeIn();
                 $.post("",
                 {
                     restoreBackup : true,
@@ -227,6 +250,7 @@ if(isset($_POST['restoreBackup']) && isset($_POST['password']) && isset($_POST['
                         {
                             alert(data);
                         }
+                        $loading.fadeOut();
                     } else
                     {
                         alert("An unknown error happened. please refresh the page");
