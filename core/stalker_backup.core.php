@@ -309,7 +309,6 @@ class Stalker_Backup extends Information_Schema
         }
         // get queries to run
         $query = file_get_contents($backup_file);
-        var_dump($query);die();
         $query_explode = explode('START TRANSACTION;', $query);
         $query = $query_explode[1];
         $query_explode = explode('COMMIT;', $query);
