@@ -1,56 +1,178 @@
 <?php
-include_once './core/stalker_configuration.core.php';
-include_once './core/stalker_registerar.core.php';
-include_once './core/stalker_schema.core.php';
-include_once './core/stalker_validator.core.php';
-include_once './core/stalker_database.core.php';
-include_once './core/stalker_table.core.php';
-include_once './core/stalker_seed.core.php';
-include_once './core/stalker_seeder.core.php';
-include_once './core/stalker_view.core.php';
-include_once './core/stalker_information_schema.core.php';
-include_once './core/stalker_migrator.core.php';
-include_once './core/stalker_backup.core.php';
+$backup_dir = './backups';
+$password = "thisisapassword";
 
-foreach ( glob("./tables/*.table.php") as $file ) {
-    require_once $file;
+if(isset($_POST['passwordForm']) && isset($_POST['password'])) {
+
+    header('Content-type: application/json');
+    $response = array();
+
+    if($_POST['password'] == $password) {
+        $response["state"] = "ok";
+        $response["backups"] = array();
+        foreach ( glob($backup_dir."/*.sql") as $file ) {
+            $explosion = explode('~', $file);
+            $backup_database = $explosion[1];
+            $backup_date = $explosion[2];
+            $backup_series = explode('.', $explosion[3]);
+            $backup_series = $backup_series[0];
+            $backup_time = substr_replace($backup_series, ":", 2, 0);
+            $backup_time = substr_replace($backup_time, ":", 5, 0);
+            $response["backups"][] = array(
+                "database" => $backup_database,
+                "date" => $backup_date,
+                "series" => $backup_series,
+                "time" => $backup_time
+            );
+        }
+    } else {
+        $response["state"] = "Wrong password";
+    }
+    echo json_encode($response);
+    exit();
 }
 
-foreach ( glob("./views/*.view.php") as $file ) {
-    require_once $file;
+if(isset($_POST['createBackup']) && isset($_POST['password'])) {
+    if($_POST['password'] == $password) {
+        require "./backup.cron.php";
+        $response = "ok";
+    } else {
+        $response = "Wrong password";
+    }
+    echo $response;
+    exit();
 }
 
-foreach ( glob("./seeds/*.seed.php") as $file ) {
-	require_once $file;
-}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Restore Database Backup</title>
 
-ini_set('xdebug.var_display_max_depth', -1);
-ini_set('xdebug.var_display_max_children', -1);
-ini_set('xdebug.var_display_max_data', -1);
+    <link rel="stylesheet"
+        href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+        integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+        crossorigin="anonymous">
+</head>
+<style>
+    body {
+        padding: 50px 0;
+    }
+    .content-container {
+        display: none;
+    }
+    .table-container {
+        margin-top: 20px
+    }
+</style>
+<body>
 
-Stalker_Registerar::auto_register();
-/*
-var_dump(Stalker_Registerar::get_registerd_tables());
-var_dump(Stalker_Configuration::database_connection());
-var_dump(Stalker_Configuration::table_settings());
-var_dump(Stalker_Configuration::custom_feilds_lengths());
-*/
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12">
+                <form class="password-container" onsubmit="return false;">
+                <div class="form-group">
+                    <label for="passowrd">Password</label>
+                    <input type="password" id="password" class="form-control">
+                </div>
+                    <input type="submit" class="btn btn-default">
+                </form>
+                <div class="content-container">
+                    <div class="new-backup-container">
+                        <a href="javascript:void(0)" class="create-backup btn btn-default">
+                            + Make a new backup
+                        </a>
+                    </div>
+                    <div class="table-container">
+                        <table class="table" id="backups-table">
+                            <thead>
+                                <th>Database</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Options</th>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-$fa = Stalker_Migrator::need_migration_data();
-var_dump($fa);
-$fa = Stalker_Migrator::migrate();
-var_dump($fa);
-$fa = Stalker_Seeder::seed_main_seeds();
-var_dump($fa);
-$fa = Stalker_Seeder::seed_temporary_seeds();
-var_dump($fa);
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+            crossorigin="anonymous">
+    </script>
+    <script>
+        jQuery(document).ready(function ($){
+            // login
+            $("form.password-container").on("submit", function(){
+                var password = $("#password").val();
+                $.post("",
+                {
+                    passwordForm : true,
+                    password : password
+                },
+                function(data, status){
+                    if(status == 'success')
+                    {
+                        if(data.state == 'ok')
+                        {
+                            var template = '\
+                                <tr><td>{database}</td><td>{date}</td><td>{time}</td>\
+                                <td><a href="javascript:void(0)" class="restore-backup" data-id="{series}">\
+                                    Restore Backup\
+                                </a></td></tr>';
+                            $("#backups-table > tbody").html("");
+                            data.backups.reverse().forEach(function(backup){
+                                var row = template.replace(new RegExp('{database}', 'g'), backup.database);
+                                row = row.replace(new RegExp('{date}', 'g'), backup.date);
+                                row = row.replace(new RegExp('{time}', 'g'), backup.time);
+                                row = row.replace(new RegExp('{series}', 'g'), backup.database+"~"+backup.date+"~"+backup.series);
+                                $("#backups-table > tbody").append(row);
+                            })
 
-$fa = Stalker_Seeder::delete_temporary_seeds();
-var_dump($fa);
-/*
-$fa = Stalker_Seeder::delete_main_seeds();
-var_dump($fa);
+                            $(".password-container").hide();
+                            $(".content-container").show();
+                        }else
+                        {
+                            alert(data.state);
+                        }
+                    } else
+                    {
+                        alert("An unknown error happened. please refresh the page");
+                    }
+                });
+            });
+            // create backup
+            $(".create-backup").click(function(){
+                var password = $("#password").val();
+                $.post("",
+                {
+                    createBackup : true,
+                    password : password
+                },
+                function(data, status){
+                    if(status == 'success')
+                    {
+                        if(data == 'ok')
+                        {
+                            $("form.password-container").submit();
+                        }else
+                        {
+                            alert(data.state);
+                        }
+                    } else
+                    {
+                        alert("An unknown error happened. please refresh the page");
+                    }
+                });
+            });
 
-$fa = Stalker_Backup::restore_backup();
-var_dump($fa);
-*/
+        });
+    </script>
+</body>
+</html>
