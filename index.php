@@ -1,4 +1,8 @@
 <?php
+include_once './core/stalker_configuration.core.php';
+
+$database = Stalker_Configuration::database_connection();
+$database = $database->database;
 $backup_dir = './backups';
 $password = "thisisapassword";
 
@@ -13,17 +17,19 @@ if(isset($_POST['passwordForm']) && isset($_POST['password'])) {
         foreach ( glob($backup_dir."/*.sql") as $file ) {
             $explosion = explode('~', $file);
             $backup_database = $explosion[1];
-            $backup_date = $explosion[2];
-            $backup_series = explode('.', $explosion[3]);
-            $backup_series = $backup_series[0];
-            $backup_time = substr_replace($backup_series, ":", 2, 0);
-            $backup_time = substr_replace($backup_time, ":", 5, 0);
-            $response["backups"][] = array(
-                "database" => $backup_database,
-                "date" => $backup_date,
-                "series" => $backup_series,
-                "time" => $backup_time
-            );
+            if($database == $backup_database){
+                $backup_date = $explosion[2];
+                $backup_series = explode('.', $explosion[3]);
+                $backup_series = $backup_series[0];
+                $backup_time = substr_replace($backup_series, ":", 2, 0);
+                $backup_time = substr_replace($backup_time, ":", 5, 0);
+                $response["backups"][] = array(
+                    "database" => $backup_database,
+                    "date" => $backup_date,
+                    "series" => $backup_series,
+                    "time" => $backup_time
+                );
+            }
         }
     } else {
         $response["state"] = "Wrong password";
@@ -34,8 +40,37 @@ if(isset($_POST['passwordForm']) && isset($_POST['password'])) {
 
 if(isset($_POST['createBackup']) && isset($_POST['password'])) {
     if($_POST['password'] == $password) {
-        require "./backup.cron.php";
+        include_once './core/stalker_validator.core.php';
+        include_once './core/stalker_database.core.php';
+        include_once './core/stalker_information_schema.core.php';
+        include_once './core/stalker_backup.core.php';
+
+        Stalker_Backup::create_backup();
         $response = "ok";
+    } else {
+        $response = "Wrong password";
+    }
+    echo $response;
+    exit();
+}
+
+if(isset($_POST['restoreBackup']) && isset($_POST['password']) && isset($_POST['series'])) {
+    if($_POST['password'] == $password) {
+        $explosion = explode('~', $_POST['series']);
+        $backup_database = $explosion[0];
+        if($database == $backup_database){
+            $backup_date = $explosion[1];
+            $backup_series = $explosion[2];
+            include_once './core/stalker_validator.core.php';
+            include_once './core/stalker_database.core.php';
+            include_once './core/stalker_information_schema.core.php';
+            include_once './core/stalker_backup.core.php';
+
+            Stalker_Backup::restore_backup($backup_date, $backup_series);
+            $response = "ok";
+        } else {
+            $response = "You can't restore a database other then the one specified in the configuration";
+        }
     } else {
         $response = "Wrong password";
     }
@@ -123,7 +158,7 @@ if(isset($_POST['createBackup']) && isset($_POST['password'])) {
                         {
                             var template = '\
                                 <tr><td>{database}</td><td>{date}</td><td>{time}</td>\
-                                <td><a href="javascript:void(0)" class="restore-backup" data-id="{series}">\
+                                <td><a href="javascript:void(0)" class="restore-backup" data-series="{series}">\
                                     Restore Backup\
                                 </a></td></tr>';
                             $("#backups-table > tbody").html("");
@@ -163,7 +198,34 @@ if(isset($_POST['createBackup']) && isset($_POST['password'])) {
                             $("form.password-container").submit();
                         }else
                         {
-                            alert(data.state);
+                            alert(data);
+                        }
+                    } else
+                    {
+                        alert("An unknown error happened. please refresh the page");
+                    }
+                });
+            });
+            // restore backup
+            $(document).on("click", ".restore-backup", function(){
+                var password = $("#password").val(),
+                    series = $(this).attr("data-series");
+                $.post("",
+                {
+                    restoreBackup : true,
+                    series : series,
+                    password : password
+                },
+                function(data, status){
+                    if(status == 'success')
+                    {
+                        if(data == 'ok')
+                        {
+                            alert("Database restored successfully");
+
+                        }else
+                        {
+                            alert(data);
                         }
                     } else
                     {
