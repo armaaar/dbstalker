@@ -46,9 +46,14 @@ var_dump($fa);
 
 $fa = Stalker_Seeder::delete_temporary_seeds();
 var_dump($fa);
+*/
+$fa = Courses_Class::get(2);
+var_dump($fa->data());
+/*
+
 $fa = Stalker_Seeder::delete_main_seeds();
 var_dump($fa);
-*/
 
 $fa = Stalker_Backup::restore_backup("2018-09-29", "145457");
 var_dump($fa);
+*/
