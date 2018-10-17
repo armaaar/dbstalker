@@ -83,4 +83,14 @@ class Information_Schema
         $results = $stmt ->fetchAll();
         return $results[0]['VIEW_DEFINITION'];
     }
+
+    // helper methods
+    public static function table_has_column($table_name, $column_name) {
+        $cols = self::get_table_description($table_name);
+        $key = array_search($column_name, array_column($cols, 'Field'));
+        if($key === FALSE) {
+            return FALSE;
+        }
+        return TRUE;
+    }
 }

@@ -64,7 +64,7 @@ class Stalker_Migrator extends Information_Schema
                 if(!self::database_table_exist($table_name)) {
                     $data[$table_name] = "create";
                 } else {
-                    $info = self::table_migration_info($table, true);
+                    $info = self::table_migration_info($table, TRUE);
                     if($info) {
                         $data[$table_name] = $info;
                     }
@@ -80,10 +80,10 @@ class Stalker_Migrator extends Information_Schema
         if($existing_tables) {
             return in_array($table_name, $existing_tables);
         }
-        return false;
+        return FALSE;
     }
 
-    protected static function table_migration_info(Stalker_Table $table, $return_errors=false) {
+    protected static function table_migration_info(Stalker_Table $table, $return_errors=FALSE) {
         $existing_table_fields = self::get_table_description($table->table_name);
         $sync_cols = array();
         $errors = array();

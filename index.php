@@ -9,6 +9,7 @@ include_once './core/stalker_seed.core.php';
 include_once './core/stalker_seeder.core.php';
 include_once './core/stalker_view.core.php';
 include_once './core/stalker_information_schema.core.php';
+include_once './core/stalker_query.core.php';
 include_once './core/stalker_migrator.core.php';
 include_once './core/stalker_backup.core.php';
 
@@ -37,18 +38,29 @@ var_dump(Stalker_Configuration::custom_feilds_lengths());
 
 $fa = Stalker_Migrator::need_migration_data();
 var_dump($fa);
+*/
 $fa = Stalker_Migrator::migrate();
 var_dump($fa);
 $fa = Stalker_Seeder::seed_main_seeds();
 var_dump($fa);
+/*
 $fa = Stalker_Seeder::seed_temporary_seeds();
 var_dump($fa);
 
 $fa = Stalker_Seeder::delete_temporary_seeds();
 var_dump($fa);
 */
-$fa = Courses_Class::get(2);
-var_dump($fa->data());
+$fa = Courses_Class::query()
+        ->where("branch_id", 3)
+            ->and_q("type", "norm", "like")
+            ->or_q("type", "comp", "<>")
+            ->group("branch_id", "min_kids")
+            ->having("uniform", 1)
+            ->and_q("type", "norm", "like")
+            ->or_q("type", "comp", "<>")
+            ->order("branch_id", "min_kids")
+            ->limit(1);
+var_dump($fa);
 /*
 
 $fa = Stalker_Seeder::delete_main_seeds();

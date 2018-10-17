@@ -23,12 +23,6 @@ class Stalker_Table
         }
     }
 
-    protected function reset_object() {
-        foreach ($this as $key => $value) {
-            unset($this->$key);
-        }
-    }
-
     public function data() {
         $args = array();
         foreach ($this->schema() as $name => $col) {
@@ -45,6 +39,11 @@ class Stalker_Table
 
     public function serialize() {
         return json_encode($this->data());
+    }
+
+    public static function query() {
+        $self = new static();
+        return new Stalker_Query($self->table_name);
     }
 
     public static function fetch_all()
@@ -175,6 +174,12 @@ class Stalker_Table
         $stmt = $this->db->execute("DELETE FROM `{$this->table_name}` WHERE `id`=:id LIMIT 1",['id'=>$this->id]);
         $this->reset_object();
         return true;
+    }
+
+    protected function reset_object() {
+        foreach ($this as $key => $value) {
+            unset($this->$key);
+        }
     }
 
 }
