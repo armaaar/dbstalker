@@ -10,6 +10,7 @@ class Stalker_Query
 
     protected $last_operation;
     protected $order_pairs;
+    protected $group_columns;
 
     protected $where;
     protected $group;
@@ -28,6 +29,7 @@ class Stalker_Query
 
         $this->last_operation = null;
         $this->order_pairs = array();
+        $this->group_columns = array();
 
         $this->where = null;
         $this->group = null;
@@ -99,6 +101,7 @@ class Stalker_Query
                 $this->group .= $group;
             }
             $this->last_operation = "group";
+            $this->group_columns = $columns;
         }
         return $this;
     }
@@ -299,6 +302,37 @@ class Stalker_Query
         if($number_of_records == 1 && count($results) > 0) {
             return $results[0];
         }
+        return $results;
+    }
+
+    public function count() {
+        $stmt = $this->db->execute("SELECT COUNT(*) AS `count`
+                                    FROM `{$this->table_name}`
+                                    {$this->where}
+                                    {$this->group}
+                                    {$this->having}
+                                    {$this->order}
+                                    {$this->limit}",
+                                $this->args);
+        $results = $stmt ->fetchAll();
+        if($results) {
+            return $results[0]->count;
+        } else {
+            return 0;
+        }
+    }
+
+    public function count_group() {
+        $group_cols = implode(', ', $this->group_columns);
+        $stmt = $this->db->execute("SELECT $group_cols, COUNT(*) AS `count`
+                                    FROM `{$this->table_name}`
+                                    {$this->where}
+                                    {$this->group}
+                                    {$this->having}
+                                    {$this->order}
+                                    {$this->limit}",
+                                $this->args);
+        $results = $stmt ->fetchAll();
         return $results;
     }
 
