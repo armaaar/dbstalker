@@ -23,27 +23,6 @@ class Stalker_Table
         }
     }
 
-    public function __get($key)
-    {
-        var_dump("Haha");
-        //return $this->getAttribute($key);
-    }
-
-    public static function query() {
-        $self = new static();
-        return new Stalker_Query($self->table_name);
-    }
-
-    public static function __callStatic($name, $arguments) {
-        if(method_exists('Stalker_Query',$name)) {
-            return self::query()->{$name}(...$arguments);
-        } else {
-			$trace = debug_backtrace();
-			$caller = $trace[1];
-			trigger_error($caller['class']. "::" .$caller['function']. " -> Call to undefined method '$name'", E_USER_ERROR);
-        }
-    }
-
     public function data() {
         $args = array();
         foreach ($this->schema() as $name => $col) {
@@ -196,6 +175,50 @@ class Stalker_Table
         foreach ($this as $key => $value) {
             unset($this->$key);
         }
+    }
+
+    // queries
+    public static function query() {
+        $self = new static();
+        return new Stalker_Query($self->table_name);
+    }
+
+    public static function __callStatic($name, $arguments) {
+        if(method_exists('Stalker_Query', $name)) {
+            return self::query()->{$name}(...$arguments);
+        } else {
+			$trace = debug_backtrace();
+			$caller = $trace[1];
+			trigger_error($caller['class']. "::" .$caller['function']. " -> Call to undefined method '$name'", E_USER_ERROR);
+        }
+    }
+
+    // relations
+    public function __get($key)
+    {
+        // if $key is a function in the child class
+        if(method_exists($this, $key) && !method_exists("Stalker_Table", $key)) {
+            return $this->{$key}();
+        } else {
+			$class = get_class($this);
+			trigger_error($class. "::$" .$key. " -> Undefined property '$$key'", E_USER_NOTICE);
+        }
+    }
+
+    protected function has_one($table_name, $column_name) {
+        return $table_name::where($column_name, $this->id)->first();
+    }
+
+    protected function has_many($table_name, $column_name) {
+        return $table_name::where($column_name, $this->id)->fetch();
+    }
+
+    protected function belongs_to($table_name, $column_name) {
+        return $table_name::where('id', $this->{$column_name})->first();
+    }
+
+    protected function belongs_to_many($table_name, $column_name) {
+        return $table_name::where('id', $this->{$column_name})->fetch();
     }
 
 }

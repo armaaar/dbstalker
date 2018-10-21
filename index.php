@@ -48,7 +48,6 @@ var_dump($fa);
 
 $fa = Stalker_Seeder::delete_temporary_seeds();
 var_dump($fa);
-*/
 $fa = Courses_Class::where("branch_id", 5)
             ->and_q("type", "norm")
             ->group("branch_id", "min_kids")
@@ -56,9 +55,12 @@ $fa = Courses_Class::where("branch_id", 5)
             ->order("branch_id", "min_kids")
             ->last(5);
 var_dump($fa);
+*/
 $fa = Courses_Class::get(1);
-var_dump($fa->fwfws);
+var_dump($fa->branch);
 
+$fa = Branches::get(5);
+var_dump($fa->course_classes);
 /*
 
 $fa = Stalker_Seeder::delete_main_seeds();

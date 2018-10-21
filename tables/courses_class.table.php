@@ -10,4 +10,8 @@ class Courses_Class extends Stalker_Table
             $table->boolean("uniform")->def(false);
         });
     }
+
+    public function branch() {
+        return $this->belongs_to("Branches", "branch_id");
+    }
 }
