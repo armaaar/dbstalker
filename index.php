@@ -38,7 +38,6 @@ var_dump(Stalker_Configuration::custom_feilds_lengths());
 
 $fa = Stalker_Migrator::need_migration_data();
 var_dump($fa);
-*/
 $fa = Stalker_Migrator::migrate();
 var_dump($fa);
 $fa = Stalker_Seeder::seed_main_seeds();
@@ -50,14 +49,16 @@ var_dump($fa);
 $fa = Stalker_Seeder::delete_temporary_seeds();
 var_dump($fa);
 */
-$fa = Courses_Class::query()
-        ->where("branch_id", 5)
+$fa = Courses_Class::where("branch_id", 5)
             ->and_q("type", "norm")
             ->group("branch_id", "min_kids")
             ->having("uniform", 1)
             ->order("branch_id", "min_kids")
             ->last(5);
 var_dump($fa);
+$fa = Courses_Class::get(1);
+var_dump($fa->fwfws);
+
 /*
 
 $fa = Stalker_Seeder::delete_main_seeds();

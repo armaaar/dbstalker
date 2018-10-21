@@ -257,6 +257,9 @@ class Stalker_Query
             $number_of_records=1;
         }
         $results = $this->limit($number_of_records)->fetch();
+        if($number_of_records == 1) {
+            return $results[0];
+        }
         return $results;
     }
 
@@ -293,6 +296,9 @@ class Stalker_Query
         }
         $this->order = null;
         $results = $this->order(...$reversed_orders)->limit($number_of_records)->fetch();
+        if($number_of_records == 1) {
+            return $results[0];
+        }
         return $results;
     }
 

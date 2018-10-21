@@ -23,6 +23,27 @@ class Stalker_Table
         }
     }
 
+    public function __get($key)
+    {
+        var_dump("Haha");
+        //return $this->getAttribute($key);
+    }
+
+    public static function query() {
+        $self = new static();
+        return new Stalker_Query($self->table_name);
+    }
+
+    public static function __callStatic($name, $arguments) {
+        if(method_exists('Stalker_Query',$name)) {
+            return self::query()->{$name}(...$arguments);
+        } else {
+			$trace = debug_backtrace();
+			$caller = $trace[1];
+			trigger_error($caller['class']. "::" .$caller['function']. " -> Call to undefined method '$name'", E_USER_ERROR);
+        }
+    }
+
     public function data() {
         $args = array();
         foreach ($this->schema() as $name => $col) {
@@ -39,11 +60,6 @@ class Stalker_Table
 
     public function serialize() {
         return json_encode($this->data());
-    }
-
-    public static function query() {
-        $self = new static();
-        return new Stalker_Query($self->table_name);
     }
 
     public static function fetch_all()
