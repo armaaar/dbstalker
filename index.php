@@ -51,15 +51,12 @@ $fa = Stalker_Seeder::delete_temporary_seeds();
 var_dump($fa);
 */
 $fa = Courses_Class::query()
-        ->where("branch_id", 3)
-            ->and_q("type", "norm", "like")
-            ->or_q("type", "comp", "<>")
+        ->where("branch_id", 5)
+            ->and_q("type", "norm")
             ->group("branch_id", "min_kids")
             ->having("uniform", 1)
-            ->and_q("type", "norm", "like")
-            ->or_q("type", "comp", "<>")
             ->order("branch_id", "min_kids")
-            ->limit(1);
+            ->last(5);
 var_dump($fa);
 /*
 

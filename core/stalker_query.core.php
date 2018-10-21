@@ -3,11 +3,14 @@
 class Stalker_Query
 {
     protected $table_name;
+    protected $db;
 
     protected $args;
     protected $args_key_counter;
 
     protected $last_operation;
+    protected $order_pairs;
+
     protected $where;
     protected $group;
     protected $having;
@@ -17,13 +20,20 @@ class Stalker_Query
     protected $supported_operands;
 
     public function __construct($table_name) {
+        $this->db = Stalker_Database::instance();
         $this->table_name = $table_name;
 
         $this->args = array();
         $this->args_key_counter = 0;
 
         $this->last_operation = null;
+        $this->order_pairs = array();
+
         $this->where = null;
+        $this->group = null;
+        $this->having = null;
+        $this->order = null;
+        $this->limit = null;
 
         $this->supported_operands = array(
             '=', '<>', 'is', 'is not', '>', '>=', '<', '<=', 'like', 'not like'
@@ -45,9 +55,18 @@ class Stalker_Query
             }
             $where .= " `$column` ".$operand." $value";
         } else {
-            $where .= " `$column` ".$operand." :".$column.$this->args_key_counter;
-            $args[":".$column.$this->args_key_counter] = $value;
-            $this->args_key_counter++;
+            if(is_null($value)) {
+                if(in_array($operand, array('<>', 'is not', 'not like'))) {
+                    $where .= " `$column` IS NOT NULL";
+                } else {
+                    $where .= " `$column` IS NULL";
+                }
+
+            } else {
+                $where .= " `$column` ".$operand." :".$column.$this->args_key_counter;
+                $args[":".$column.$this->args_key_counter] = $value;
+                $this->args_key_counter++;
+            }
         }
         if(is_null($this->where)) {
             $this->where = $where;
@@ -60,25 +79,27 @@ class Stalker_Query
     }
 
     public function group(...$columns) {
-        $group = '';
-        if(is_null($this->group)) {
-            $group = " GROUP BY";
-        } else {
-            $group = ",";
-        }
-        foreach($columns as $column) {
-            if(!$this->check_parameters($column)) {
-                return $this;
+        if($columns) {
+            $group = '';
+            if(is_null($this->group)) {
+                $group = " GROUP BY";
+            } else {
+                $group = ",";
             }
-            $group .= " `$column`,";
+            foreach($columns as $column) {
+                if(!$this->check_parameters($column)) {
+                    return $this;
+                }
+                $group .= " `$column`,";
+            }
+            $group = substr($group, 0, -1);
+            if(is_null($this->group)) {
+                $this->group = $group;
+            } else {
+                $this->group .= $group;
+            }
+            $this->last_operation = "group";
         }
-        $group = substr($group, 0, -1);
-        if(is_null($this->group)) {
-            $this->group = $group;
-        } else {
-            $this->group .= $group;
-        }
-        $this->last_operation = "group";
         return $this;
     }
 
@@ -101,9 +122,17 @@ class Stalker_Query
             }
             $having .= " `$column` ".$operand." $value";
         } else {
-            $having .= " `$column` ".$operand.":" .$column.$this->args_key_counter;
-            $args[":".$column.$this->args_key_counter] = $value;
-            $this->args_key_counter++;
+            if(is_null($value)) {
+                if(in_array($operand, array('<>', 'is not', 'not like'))) {
+                    $having .= " `$column` IS NOT NULL";
+                } else {
+                    $having .= " `$column` IS NULL";
+                }
+            } else {
+                $having .= " `$column` ".$operand." :" .$column.$this->args_key_counter;
+                $args[":".$column.$this->args_key_counter] = $value;
+                $this->args_key_counter++;
+            }
         }
         if(is_null($this->where)) {
             $this->having = $having;
@@ -116,35 +145,38 @@ class Stalker_Query
     }
 
     public function order(...$columns) {
-        $order = '';
-        if(is_null($this->order)) {
-            $order = " ORDER BY";
-        } else {
-            $order = ",";
+        if($columns) {
+            $order = '';
+            if(is_null($this->order)) {
+                $order = " ORDER BY";
+            } else {
+                $order = ",";
+            }
+            foreach($columns as $key => $column) {
+                if(!is_array($column)) {
+                    $column = array($column);
+                }
+                if(!$this->check_parameters($column[0])) {
+                    return $this;
+                }
+                if(!array_key_exists(1, $column)) {
+                    $column[1] = 'ASC';
+                }
+                if(!in_array(strtoupper($column[1]), array('ASC', 'DESC'))) {
+                    trigger_error("Order direction has strange value, ASC used instead", E_USER_WARNING);
+                    $column[1] = 'ASC';
+                }
+                $order .= " `{$column[0]}` ".strtoupper($column[1]).",";
+            }
+            $order = substr($order, 0, -1);
+            if(is_null($this->order)) {
+                $this->order = $order;
+            } else {
+                $this->order .= $order;
+            }
+            $this->last_operation = "order";
+            $this->order_pairs = $columns;
         }
-        foreach($columns as $column) {
-            if(!is_array($column)) {
-                $column = array($column);
-            }
-            if(!$this->check_parameters($column[0])) {
-                return $this;
-            }
-            if(!array_key_exists(1, $column)) {
-                $column[1] = 'ASC';
-            }
-            if(!in_array(strtoupper($column[1]), array('ASC', 'DESC'))) {
-                trigger_error("Order direction has strange value, ASC used instead", E_USER_WARNING);
-                $column[1] = 'ASC';
-            }
-            $order .= " `{$column[0]}` ".strtoupper($column[1]).",";
-        }
-        $order = substr($order, 0, -1);
-        if(is_null($this->order)) {
-            $this->order = $order;
-        } else {
-            $this->order .= $order;
-        }
-        $this->last_operation = "order";
         return $this;
     }
 
@@ -199,6 +231,69 @@ class Stalker_Query
             return FALSE;
         }
         return TRUE;
+    }
+
+    // get data
+    public function fetch() {
+        $stmt = $this->db->execute("SELECT *
+                                    FROM `{$this->table_name}`
+                                    {$this->where}
+                                    {$this->group}
+                                    {$this->having}
+                                    {$this->order}
+                                    {$this->limit}",
+                                $this->args);
+        $results = $stmt ->fetchAll();
+        $instances = [];
+        foreach ($results as $result)
+        {
+            $instances[] = new $this->table_name($result);
+        }
+        return $instances;
+    }
+
+    public function first($number_of_records=1) {
+        if(!Stalker_Validator::is_id($number_of_records)) {
+            $number_of_records=1;
+        }
+        $results = $this->limit($number_of_records)->fetch();
+        return $results;
+    }
+
+    public function last($number_of_records=1) {
+        if(!Stalker_Validator::is_id($number_of_records)) {
+            $number_of_records=1;
+        }
+        $reversed_orders = array();
+        if(empty($this->order_pairs)) {
+            $reversed_orders[] = array('id', 'DESC');
+        } else {
+            foreach ($this->order_pairs as $key => $value) {
+                if(!is_array($value)) {
+                    $value = array($value);
+                }
+                // set defaults
+                $reversed_orders[$key][0] = $value[0];
+                if(!array_key_exists(1, $value)) {
+                    $value[1] = 'ASC';
+                    $reversed_orders[$key][1] = 'ASC';
+                }
+                if(!in_array(strtoupper($value[1]), array('ASC', 'DESC'))) {
+                    trigger_error("Order direction has strange value, ASC used instead", E_USER_WARNING);
+                    $value[1] = 'ASC';
+                    $reversed_orders[$key][1] = 'ASC';
+                }
+                //reverse order
+                if(strtoupper($value[1]) == 'ASC') {
+                    $reversed_orders[$key][1] = 'DESC';
+                } else {
+                    $reversed_orders[1] = 'ASC';
+                }
+            }
+        }
+        $this->order = null;
+        $results = $this->order(...$reversed_orders)->limit($number_of_records)->fetch();
+        return $results;
     }
 
 }

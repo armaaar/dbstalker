@@ -54,12 +54,12 @@ class Stalker_Table
         $instances = [];
         foreach ($results as $result)
         {
-        $instance = new static();
-        foreach ($result as $key => $value)
-        {
-            $instance->{$key} = $value;
-        }
-        $instances[]=$instance;
+            $instance = new static();
+            foreach ($result as $key => $value)
+            {
+                $instance->{$key} = $value;
+            }
+            $instances[]=$instance;
         }
         return $instances;
     }
@@ -75,12 +75,12 @@ class Stalker_Table
         $results = $stmt ->fetchAll();
         if($results)
         {
-        foreach ($results[0] as $key => $value)
-        {
-            $self->{$key} = $value;
-        }
+            foreach ($results[0] as $key => $value)
+            {
+                $self->{$key} = $value;
+            }
         } else {
-        return null;
+            return null;
         }
         return $self;
     }
