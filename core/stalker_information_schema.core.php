@@ -27,7 +27,7 @@ class Information_Schema
         $stmt->setFetchMode(PDO::FETCH_ASSOC);
         $results = $stmt ->fetchAll();
         if(!$results) {
-            return NULL;
+            return array();
         }
         return array_column($results, 'TABLE_NAME');
     }
@@ -39,7 +39,7 @@ class Information_Schema
         $stmt->setFetchMode(PDO::FETCH_ASSOC);
         $results = $stmt ->fetchAll();
         if(!$results) {
-            return NULL;
+            return array();
         }
         return $results;
     }
@@ -67,7 +67,7 @@ class Information_Schema
         $stmt->setFetchMode(PDO::FETCH_ASSOC);
         $results = $stmt ->fetchAll();
         if(!$results) {
-            return NULL;
+            return array();
         }
         return array_column($results, 'TABLE_NAME');
     }
