@@ -2,7 +2,7 @@
 
 class Stalker_Table
 {
-    public $table_name;
+    protected $table_name;
     protected $db;
 
     public function __construct($data=null)
@@ -43,41 +43,12 @@ class Stalker_Table
 
     public static function fetch_all()
     {
-        $self = new static();
-        $stmt = $self ->db->execute("SELECT * FROM `{$self->table_name}`");
-        $results = $stmt ->fetchAll();
-        $instances = [];
-        foreach ($results as $result)
-        {
-            $instance = new static();
-            foreach ($result as $key => $value)
-            {
-                $instance->{$key} = $value;
-            }
-            $instances[]=$instance;
-        }
-        return $instances;
+        return self::fetch();
     }
 
     public static function get($id)
     {
-        if(!Stalker_Validator::is_id($id))
-        {
-            return false;
-        }
-        $self = new static();
-        $stmt = $self ->db->execute("SELECT * FROM `{$self->table_name}` WHERE `id`=:id",['id'=>$id]);
-        $results = $stmt ->fetchAll();
-        if($results)
-        {
-            foreach ($results[0] as $key => $value)
-            {
-                $self->{$key} = $value;
-            }
-        } else {
-            return null;
-        }
-        return $self;
+        return self::where("id", $id)->first();
     }
 
     public function update_object($data) {
@@ -166,7 +137,7 @@ class Stalker_Table
         {
             return false;
         }
-        $stmt = $this->db->execute("DELETE FROM `{$this->table_name}` WHERE `id`=:id LIMIT 1",['id'=>$this->id]);
+        $stmt = $this->db->execute("DELETE FROM `{$this->table_name}` WHERE `id`=:id LIMIT 1",[':id'=>$this->id]);
         $this->reset_object();
         return true;
     }
@@ -219,6 +190,36 @@ class Stalker_Table
 
     protected function belongs_to_many($table_name, $column_name) {
         return $table_name::where('id', $this->{$column_name})->fetch();
+    }
+
+    protected function has_one_through($target_table_name, $intermediate_table_name, $intermediate_target_column_name, $intermediate_self_column_name) {
+        $stmt = $this->db->execute("SELECT *
+                                    FROM `{$target_table_name}`
+                                    INNER JOIN `{$intermediate_table_name}`
+                                        ON `{$target_table_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_target_column_name}`
+                                    INNER JOIN `{$this->table_name}`
+                                        ON `{$this->table_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_self_column_name}`
+                                    WHERE `{$this->table_name}`.`id` = :id
+                                    LIMIT 1",
+                                array(":id"=>$this->id));
+        $results = $stmt ->fetchAll();
+        if($results) {
+            return $results[0];
+        }
+        return null;
+    }
+
+    protected function has_many_through($target_table_name, $intermediate_table_name, $intermediate_target_column_name, $intermediate_self_column_name) {
+        $stmt = $this->db->execute("SELECT `{$target_table_name}`.*
+                                    FROM `{$target_table_name}`
+                                    INNER JOIN `{$intermediate_table_name}`
+                                        ON `{$target_table_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_target_column_name}`
+                                    INNER JOIN `{$this->table_name}`
+                                        ON `{$this->table_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_self_column_name}`
+                                    WHERE `{$this->table_name}`.`id` = :id",
+                                array(":id"=>$this->id));
+        $results = $stmt ->fetchAll();
+        return $results;
     }
 
 }
