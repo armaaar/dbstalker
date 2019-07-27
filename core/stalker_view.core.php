@@ -65,7 +65,7 @@ class Stalker_View
             return false;
         }
         $self = new static();
-        $stmt = $self ->db->execute("SELECT * FROM `{$self->view_name}` WHERE `id`=:id",['id'=>$id]);
+        $stmt = $self ->db->execute("SELECT * FROM `{$self->view_name}` WHERE `id`=:id",[':id'=>$id]);
         $results = $stmt ->fetchAll();
         if($results)
         {
