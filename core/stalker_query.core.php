@@ -12,6 +12,7 @@ class Stalker_Query
     protected $order_pairs;
     protected $group_columns;
 
+    protected $select;
     protected $where;
     protected $group;
     protected $having;
@@ -31,6 +32,7 @@ class Stalker_Query
         $this->order_pairs = array();
         $this->group_columns = array();
 
+        $this->select = '*';
         $this->where = null;
         $this->group = null;
         $this->having = null;
@@ -40,6 +42,22 @@ class Stalker_Query
         $this->supported_operands = array(
             '=', '<>', 'is', 'is not', '>', '>=', '<', '<=', 'like', 'not like'
         );
+    }
+
+    public function select(...$columns) {
+        if($columns){
+            $select = '';
+            foreach ($columns as $column) {
+                if(!$this->check_parameters($column)) {
+                    return $this;
+                }
+                $select .= " `$column`,";
+            }
+            $select = substr($select, 0, -1);
+            $this->select = $select;
+            $this->last_operation = "select";
+        }
+        return $this;
     }
 
     public function where($column, $value, $operand='=', $value_is_column=FALSE) {
@@ -238,7 +256,7 @@ class Stalker_Query
 
     // get data
     public function fetch() {
-        $stmt = $this->db->execute("SELECT *
+        $stmt = $this->db->execute("SELECT {$this->select}
                                     FROM `{$this->table_name}`
                                     {$this->where}
                                     {$this->group}
@@ -247,7 +265,7 @@ class Stalker_Query
                                     {$this->limit}",
                                 $this->args);
         $results = $stmt ->fetchAll();
-        $instances = [];
+        $instances = array();
         foreach ($results as $result)
         {
             $instances[] = new $this->table_name($result);
@@ -260,8 +278,12 @@ class Stalker_Query
             $number_of_records=1;
         }
         $results = $this->limit($number_of_records)->fetch();
-        if($number_of_records == 1 && count($results) > 0) {
-            return $results[0];
+        if($number_of_records == 1) {
+            if(count($results) > 0) {
+                return $results[0];
+            } else {
+                return null;
+            }
         }
         return $results;
     }
@@ -299,8 +321,12 @@ class Stalker_Query
         }
         $this->order = null;
         $results = $this->order(...$reversed_orders)->limit($number_of_records)->fetch();
-        if($number_of_records == 1 && count($results) > 0) {
-            return $results[0];
+        if($number_of_records == 1) {
+            if(count($results) > 0) {
+                return $results[0];
+            } else {
+                return null;
+            }
         }
         return $results;
     }
