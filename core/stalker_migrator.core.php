@@ -87,7 +87,7 @@ class Stalker_Migrator extends Information_Schema
         $existing_table_fields = self::get_table_description(strtolower(get_class($table)));
         $sync_cols = array();
         $errors = array();
-        foreach ($table->schema() as $name => $col) {
+        foreach ($table->schema as $name => $col) {
             $key = array_search($name, array_column($existing_table_fields, 'Field'));
             if($key === FALSE) {
                 if(!$return_errors) {
@@ -231,7 +231,7 @@ class Stalker_Migrator extends Information_Schema
     protected static function create_table(Stalker_Table $table) {
         $self = new static();
         $table_name = strtolower(get_class($table));
-        $schema = $table->schema();
+        $schema = $table->schema;
         $query="";
         $pri_keys= array();
         $uni_keys= array();

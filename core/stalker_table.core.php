@@ -4,6 +4,7 @@ class Stalker_Table
 {
     protected $table_name;
     protected $db;
+    public $schema;
 
     public function __construct($data=null)
     {
@@ -13,7 +14,12 @@ class Stalker_Table
             Stalker_Registerar::register_table($this->table_name, $this);
         }
 
+        // get db instance
         $this -> db = Stalker_Database::instance();
+
+        // Get table schema
+        $this -> schema = $this->schema();
+
         if(is_array($data) || is_object($data))
         {
             foreach ($data as $key => $value)
@@ -25,7 +31,7 @@ class Stalker_Table
 
     public function data() {
         $args = array();
-        foreach ($this->schema() as $name => $col) {
+        foreach ($this->schema as $name => $col) {
             if($name != Stalker_Schema::SEED_COLUMN) {
                 if(property_exists($this, $name)) {
                     $args[$name] = $this->$name;
@@ -64,7 +70,7 @@ class Stalker_Table
     }
 
     public function validate() {
-        return Stalker_Validator::validate_to_schema($this, $this->schema());
+        return Stalker_Validator::validate_to_schema($this, $this->schema);
     }
 
     public function save()
