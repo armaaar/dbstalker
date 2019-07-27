@@ -16,67 +16,92 @@ class Stalker_View
         $this -> db = Stalker_Database::instance();
     }
 
-    protected function reset_object() {
-        foreach ($this as $key => $value) {
-            unset($this->$key);
-        }
-    }
+    public function data() { /* Not implemented */ }
 
-    public function data() {
-        $args = array();
-        foreach ($this->schema() as $name => $col) {
-            if($name != Stalker_Schema::SEED_COLUMN) {
-                if(property_exists($this, $name)) {
-                    $args[$name] = $this->$name;
-                } elseif(array_key_exists("default", $col)) {
-                    $args[$name] = $col["default"];
-                }
-            }
-        }
-        return $args;
-    }
-
-    public function serialize() {
-        return json_encode($this->data());
-    }
+    public function serialize() { /* Not implemented */ }
 
     public static function fetch_all()
     {
-        $self = new static();
-        $stmt = $self ->db->execute("SELECT * FROM `{$self->view_name}`");
-        $results = $stmt ->fetchAll();
-        $instances = [];
-        foreach ($results AS $result)
-        {
-            $instance = new static();
-            foreach ($result AS $key => $value)
-            {
-                $instance->{$key} = $value;
-            }
-            $instances[]=$instance;
-        }
-        return $instances;
+        return self::fetch();
     }
 
     public static function get($id)
     {
-        if(!is_id($id))
-        {
-            return false;
-        }
+        return self::where("id", $id)->first();
+    }
+
+    // queries
+    public static function query() {
         $self = new static();
-        $stmt = $self ->db->execute("SELECT * FROM `{$self->view_name}` WHERE `id`=:id",[':id'=>$id]);
-        $results = $stmt ->fetchAll();
-        if($results)
-        {
-            foreach ($results[0] AS $key => $value)
-            {
-                $self->{$key} = $value;
-            }
+        return new Stalker_Query($self->view_name);
+    }
+
+    public static function __callStatic($name, $arguments) {
+        if(method_exists('Stalker_Query', $name)) {
+            return self::query()->{$name}(...$arguments);
         } else {
-            return null;
+			$trace = debug_backtrace();
+			$caller = $trace[1];
+			trigger_error($caller['class']. "::" .$caller['function']. " -> Call to undefined method '$name'", E_USER_ERROR);
         }
-        return $self;
+    }
+
+    // relations
+    public function __get($key)
+    {
+        // if $key is a function in the child class
+        if(method_exists($this, $key) && !method_exists("Stalker_View", $key)) {
+            return $this->{$key}();
+        } else {
+			$class = get_class($this);
+			trigger_error($class. "::$" .$key. " -> Undefined property '$$key'", E_USER_NOTICE);
+        }
+    }
+
+    protected function has_one($table_name, $column_name) {
+        return $table_name::where($column_name, $this->id)->first();
+    }
+
+    protected function has_many($table_name, $column_name) {
+        return $table_name::where($column_name, $this->id)->fetch();
+    }
+
+    protected function belongs_to($table_name, $column_name) {
+        return $table_name::where('id', $this->{$column_name})->first();
+    }
+
+    protected function belongs_to_many($table_name, $column_name) {
+        return $table_name::where('id', $this->{$column_name})->fetch();
+    }
+
+    protected function has_one_through($target_table_name, $intermediate_table_name, $intermediate_target_column_name, $intermediate_self_column_name) {
+        $stmt = $this->db->execute("SELECT *
+                                    FROM `{$target_table_name}`
+                                    INNER JOIN `{$intermediate_table_name}`
+                                        ON `{$target_table_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_target_column_name}`
+                                    INNER JOIN `{$this->view_name}`
+                                        ON `{$this->view_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_self_column_name}`
+                                    WHERE `{$this->view_name}`.`id` = :id
+                                    LIMIT 1",
+                                array(":id"=>$this->id));
+        $results = $stmt ->fetchAll();
+        if($results) {
+            return $results[0];
+        }
+        return null;
+    }
+
+    protected function has_many_through($target_table_name, $intermediate_table_name, $intermediate_target_column_name, $intermediate_self_column_name) {
+        $stmt = $this->db->execute("SELECT `{$target_table_name}`.*
+                                    FROM `{$target_table_name}`
+                                    INNER JOIN `{$intermediate_table_name}`
+                                        ON `{$target_table_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_target_column_name}`
+                                    INNER JOIN `{$this->view_name}`
+                                        ON `{$this->view_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_self_column_name}`
+                                    WHERE `{$this->view_name}`.`id` = :id",
+                                array(":id"=>$this->id));
+        $results = $stmt ->fetchAll();
+        return $results;
     }
 
 }
