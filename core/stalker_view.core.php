@@ -5,7 +5,7 @@ class Stalker_View
     public $view_name;
     protected $db;
 
-    public function __construct()
+    public function __construct($data=null)
     {
         //register the table
         $this->view_name = strtolower(get_class($this));
@@ -14,6 +14,14 @@ class Stalker_View
         }
 
         $this -> db = Stalker_Database::instance();
+
+        if(is_array($data) || is_object($data))
+        {
+            foreach ($data as $key => $value)
+            {
+                $this->{$key} = $value;
+            }
+        }
     }
 
     public function data() { /* Not implemented */ }
