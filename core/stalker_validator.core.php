@@ -5,7 +5,7 @@ class Stalker_Validator
     private function __construct() {}
 
     public static function regex_check($item, $type) {
-        if(empty($item) && $item !=0)
+        if(empty($item) && !($item === 0 || $item === 0.0 || $item === "0"))
         {
             return false;
         }
