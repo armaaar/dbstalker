@@ -20,6 +20,7 @@ class Stalker_Query
     protected $limit;
 
     protected $supported_operands;
+    protected $supported_aggregate_functions;
 
     public function __construct($table_name) {
         $this->db = Stalker_Database::instance();
@@ -42,16 +43,33 @@ class Stalker_Query
         $this->supported_operands = array(
             '=', '<>', 'is', 'is not', '>', '>=', '<', '<=', 'like', 'not like'
         );
+
+        $this->supported_aggregate_functions = array(
+            'AVG', 'COUNT', 'GROUP_CONCAT', 'MAX', 'MIN', 'SUM'
+        );
     }
 
     public function select(...$columns) {
         if($columns){
             $select = '';
             foreach ($columns as $column) {
-                if(!$this->check_parameters($column)) {
-                    return $this;
+                if(is_array($column)) {
+                    $function = strtoupper($column[1]);
+                    $column = $column[0];
+                    if(!is_null($function) && !in_array($function, $this->supported_aggregate_functions)) {
+                        trigger_error("The aggregate function used in a query is not supported", E_USER_WARNING);
+                        return $this;
+                    }
+                    if(!$this->check_parameters($column)) {
+                        return $this;
+                    }
+                    $select .= " $function(`$column`) AS $column,";
+                } else {
+                    if(!$this->check_parameters($column)) {
+                        return $this;
+                    }
+                    $select .= " `$column`,";
                 }
-                $select .= " `$column`,";
             }
             $select = substr($select, 0, -1);
             $this->select = $select;
