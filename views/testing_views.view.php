@@ -2,7 +2,7 @@
 
 class Testing_Views extends Stalker_View
 {
-    public function query() {
+    public function view_query() {
         return "SELECT `courses_class`.`id`, `courses_class`.`min_kids`, `test`.`f3`
                 FROM `courses_class`
                 LEFT JOIN `test`

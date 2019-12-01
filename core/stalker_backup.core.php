@@ -243,6 +243,8 @@ class Stalker_Backup extends Information_Schema
             // create the backup file
             file_put_contents($backup_dir.'/'.$backup_file, $query, FILE_APPEND | LOCK_EX);
         } catch (Exception $ex) {
+			$trace = debug_backtrace();
+			$caller = $trace[1];
 			trigger_error($caller['class']. "::" .$caller['function']. " -> " . $ex -> getMessage(), E_USER_ERROR);
             return FALSE;
         }
