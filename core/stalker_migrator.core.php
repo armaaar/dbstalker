@@ -75,7 +75,7 @@ class Stalker_Migrator extends Information_Schema
         return FALSE;
     }
 
-    protected static function database_table_exist($table_name) {
+    public static function database_table_exist($table_name) {
         $existing_tables = self::get_database_tables();
         if($existing_tables) {
             return in_array($table_name, $existing_tables);
