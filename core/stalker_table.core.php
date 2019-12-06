@@ -4,7 +4,6 @@ class Stalker_Table
 {
     protected $table_name;
     protected $db;
-    public $schema;
 
     public function __construct($data=null)
     {
@@ -16,25 +15,22 @@ class Stalker_Table
 
         // get db instance
         $this -> db = Stalker_Database::instance();
-
-        // Get table schema
-        $this -> schema = $this->schema();
-
-        if(is_array($data) || is_object($data))
-        {
-            foreach ($data as $key => $value)
-            {
-                $this->{$key} = $value;
-            }
-        }
+        $this -> update_object($data);
     }
 
     public function data() {
         $args = array();
+        // get old record
+        $old_record = null;
+        if(property_exists($this, 'id') && Stalker_Validator::is_id($this->id)) {
+            $old_record = self::get($this->id);
+        }
         foreach ($this->schema as $name => $col) {
             if($name != Stalker_Schema::SEED_COLUMN) {
                 if(property_exists($this, $name)) {
                     $args[$name] = $this->$name;
+                } elseif(!is_null($old_record) && property_exists($old_record, $name)) {
+                    $args[$name] = $old_record->$name;
                 } elseif(array_key_exists("default", $col)) {
                     $args[$name] = $col["default"];
                 }
@@ -44,12 +40,7 @@ class Stalker_Table
     }
 
     public function serialize() {
-        return json_encode($this->data());
-    }
-
-    public static function fetch_all()
-    {
-        return self::fetch();
+        return json_encode(get_object_vars($this));
     }
 
     public static function get($id)
@@ -60,10 +51,11 @@ class Stalker_Table
     public function update_object($data) {
         if(is_array($data) || is_object($data))
         {
-        foreach ($data as $key => $value)
-        {
-            $this->{$key} = $value;
-        }
+            foreach ($data as $key => $value)
+            {
+                $this->{$key} = $value;
+            }
+            return true;
         } else {
             return false;
         }
@@ -183,22 +175,51 @@ class Stalker_Table
     }
 
     protected function has_one($table_name, $column_name) {
-        return $table_name::where($column_name, $this->id)->first();
+        if(property_exists($this, 'id') && Stalker_Validator::is_id($this->id)) {
+            return $table_name::where($column_name, $this->id)->first();
+        } else {
+            return null;
+        }
     }
 
     protected function has_many($table_name, $column_name) {
-        return $table_name::where($column_name, $this->id)->fetch();
+        if(property_exists($this, 'id') && Stalker_Validator::is_id($this->id)) {
+            return $table_name::where($column_name, $this->id)->fetch();
+        } else {
+            return null;
+        }
     }
 
     protected function belongs_to($table_name, $column_name) {
+        // if property doesn't exist in instance
+        if(!(property_exists($this, $column_name) && Stalker_Validator::is_id($this->{$column_name}))) {
+            // fetch it from database if you can
+            if(property_exists($this, 'id') && Stalker_Validator::is_id($this->id)) {
+                $this->{$column_name} = self::select($column_name)->where('id', $this->id)->first()->{$column_name};
+            } else { // or return null
+                return null;
+            }
+        }
         return $table_name::where('id', $this->{$column_name})->first();
     }
 
     protected function belongs_to_many($table_name, $column_name) {
+        // if property doesn't exist in instance
+        if(!(property_exists($this, $column_name) && Stalker_Validator::is_id($this->{$column_name}))) {
+            // fetch it from database if you can
+            if(property_exists($this, 'id') && Stalker_Validator::is_id($this->id)) {
+                $this->{$column_name} = self::select($column_name)->where('id', $this->id)->first()->{$column_name};
+            } else { // or return null
+                return null;
+            }
+        }
         return $table_name::where('id', $this->{$column_name})->fetch();
     }
 
     protected function has_one_through($target_table_name, $intermediate_table_name, $intermediate_target_column_name, $intermediate_self_column_name) {
+        if(!(property_exists($this, 'id') && Stalker_Validator::is_id($this->id))) {
+            return null;
+        }
         $stmt = $this->db->execute("SELECT *
                                     FROM `{$target_table_name}`
                                     INNER JOIN `{$intermediate_table_name}`
@@ -216,6 +237,9 @@ class Stalker_Table
     }
 
     protected function has_many_through($target_table_name, $intermediate_table_name, $intermediate_target_column_name, $intermediate_self_column_name) {
+        if(!(property_exists($this, 'id') && Stalker_Validator::is_id($this->id))) {
+            return null;
+        }
         $stmt = $this->db->execute("SELECT `{$target_table_name}`.*
                                     FROM `{$target_table_name}`
                                     INNER JOIN `{$intermediate_table_name}`

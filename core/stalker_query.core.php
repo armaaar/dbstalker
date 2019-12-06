@@ -40,6 +40,8 @@ class Stalker_Query
         $this->order = null;
         $this->limit = null;
 
+        $this->aggregate_columns = array();
+
         $this->supported_operands = array(
             '=', '<>', 'is', 'is not', '>', '>=', '<', '<=', 'like', 'not like'
         );
@@ -55,20 +57,33 @@ class Stalker_Query
             foreach ($columns as $column) {
                 if(is_array($column)) {
                     $function = strtoupper($column[1]);
+                    $distinct = '';
+                    if(array_key_exists(2, $column) && $column[2] == true) {
+                        $distinct = 'DISTINCT';
+                    }
                     $column = $column[0];
                     if(!is_null($function) && !in_array($function, $this->supported_aggregate_functions)) {
                         trigger_error("The aggregate function used in a query is not supported", E_USER_WARNING);
                         return $this;
                     }
-                    if(!$this->check_parameters($column)) {
+                    if($column !== '*' && !$this->check_parameters($column)) {
                         return $this;
                     }
-                    $select .= " $function(`$column`) AS $column,";
+                    if($column === '*') {
+                        $this->aggregate_columns[] = strtolower($function);
+                    } else {
+                        $this->aggregate_columns[] = $column."_".strtolower($function);
+                        $column = "`$column`";
+                    }
+                    $select .= " $function($distinct $column) AS ".end($this->aggregate_columns).",";
                 } else {
-                    if(!$this->check_parameters($column)) {
+                    if($column !== '*' && !$this->check_parameters($column)) {
                         return $this;
                     }
-                    $select .= " `$column`,";
+                    if($column !== '*') {
+                        $column = "`$column`";
+                    }
+                    $select .= " $column,";
                 }
             }
             $select = substr($select, 0, -1);
@@ -147,7 +162,7 @@ class Stalker_Query
             trigger_error("Can't use 'having' clause without using 'group'", E_USER_WARNING);
             return $this;
         }
-        if(!$this->check_parameters($column, $operand)) {
+        if(!$this->check_parameters($column, $operand, true)) {
             return $this;
         }
         $having = '';
@@ -156,7 +171,7 @@ class Stalker_Query
             $having .= " HAVING";
         }
         if($value_is_column) {
-            if(!$this->check_parameters($value)) {
+            if(!$this->check_parameters($value, null, true)) {
                 return $this;
             }
             $having .= " `$column` ".$operand." $value";
@@ -195,7 +210,7 @@ class Stalker_Query
                 if(!is_array($column)) {
                     $column = array($column);
                 }
-                if(!$this->check_parameters($column[0])) {
+                if(!$this->check_parameters($column[0], null, true)) {
                     return $this;
                 }
                 if(!array_key_exists(1, $column)) {
@@ -236,31 +251,46 @@ class Stalker_Query
     }
 
     public function and_q($column, $value, $operand='=') {
-        if(!$this->check_parameters($column, $operand)) {
-            return $this;
-        }
         if(!in_array($this->last_operation, array('where', 'having'))) {
             trigger_error("Can't use '".__FUNCTION__."' for '{$this->last_operation}' operation", E_USER_WARNING);
             return $this;
         }
+
+        $allow_aggregate = false;
+        if($this->last_operation == 'having') {
+            $allow_aggregate = true;
+        }
+
+        if(!$this->check_parameters($column, $operand, $allow_aggregate)) {
+            return $this;
+        }
+
         $this->{$this->last_operation} .= " AND";
         return $this->{$this->last_operation}($column, $value, $operand);
     }
 
     public function or_q($column, $value, $operand='=') {
-        if(!$this->check_parameters($column, $operand)) {
-            return $this;
-        }
         if(!in_array($this->last_operation, array('where', 'having'))) {
             trigger_error("Can't use '".__FUNCTION__."' for '{$this->last_operation}' operation", E_USER_WARNING);
             return $this;
         }
+
+        $allow_aggregate = false;
+        if($this->last_operation == 'having') {
+            $allow_aggregate = true;
+        }
+
+        if(!$this->check_parameters($column, $operand, $allow_aggregate)) {
+            return $this;
+        }
+
         $this->{$this->last_operation} .= " OR";
         return $this->{$this->last_operation}($column, $value, $operand);
     }
 
-    protected function check_parameters($column, $operand=null) {
-        if(!Information_Schema::table_has_column($this->table_name, $column)) {
+    protected function check_parameters($column, $operand=null, $accept_aggregate_columns= false) {
+        if(!Information_Schema::table_has_column($this->table_name, $column)
+        && !($accept_aggregate_columns && in_array($column, $this->aggregate_columns))) {
             trigger_error("Table '{$this->table_name}' doesn't have a column named '$column'", E_USER_WARNING);
             return FALSE;
         }
@@ -348,36 +378,4 @@ class Stalker_Query
         }
         return $results;
     }
-
-    public function count() {
-        $stmt = $this->db->execute("SELECT COUNT(*) AS `count`
-                                    FROM `{$this->table_name}`
-                                    {$this->where}
-                                    {$this->group}
-                                    {$this->having}
-                                    {$this->order}
-                                    {$this->limit}",
-                                $this->args);
-        $results = $stmt ->fetchAll();
-        if($results) {
-            return $results[0]->count;
-        } else {
-            return 0;
-        }
-    }
-
-    public function count_group() {
-        $group_cols = implode(', ', $this->group_columns);
-        $stmt = $this->db->execute("SELECT $group_cols, COUNT(*) AS `count`
-                                    FROM `{$this->table_name}`
-                                    {$this->where}
-                                    {$this->group}
-                                    {$this->having}
-                                    {$this->order}
-                                    {$this->limit}",
-                                $this->args);
-        $results = $stmt ->fetchAll();
-        return $results;
-    }
-
 }

@@ -80,7 +80,7 @@ class Stalker_Seeder {
         } else {
             $data = $seed->temporary_seed();
         }
-        foreach ($data as $row) {
+        foreach ($data as $index => $row) {
             if($main_seed && !array_key_exists('id', $row)) {
                 trigger_error("Main seeds for table '$table_name' has no 'id' value.", E_USER_WARNING);
 			    continue;
@@ -106,7 +106,11 @@ class Stalker_Seeder {
                     self::insert_seed_row($table_name, $row);
                 }
             } else {
-                trigger_error("Main seed with id={$row['id']} for table '$table_name' is not valid.", E_USER_WARNING);
+                if($main_seed) {
+                    trigger_error("Main seed with id={$row['id']} for table '$table_name' is not valid.", E_USER_WARNING);
+                } else {
+                    trigger_error("Temporary seed with index={$index} for table '$table_name' is not valid.", E_USER_WARNING);
+                }
                 continue;
             }
         }
@@ -125,6 +129,10 @@ class Stalker_Seeder {
 
     protected static function insert_seed_row($table_name, array $data) {
         $table_name = strtolower($table_name);
+        if(!Stalker_Migrator::database_table_exist($table_name)) {
+            trigger_error("Table '$table_name' doesn't exist.", E_USER_ERROR);
+            exit();
+        }
         $self = new static();
         $args=[];
         $columns = '';
@@ -149,6 +157,10 @@ class Stalker_Seeder {
 
     protected static function update_seed_row($table_name, array $data) {
         $table_name = strtolower($table_name);
+        if(!Stalker_Migrator::database_table_exist($table_name)) {
+            trigger_error("Table '$table_name' doesn't exist.", E_USER_ERROR);
+            exit();
+        }
         $self = new static();
         $args=[];
         $set = '';
@@ -172,6 +184,10 @@ class Stalker_Seeder {
 
     protected static function table_delete_seed($table_name, $main_seed) {
         $table_name = strtolower($table_name);
+        if(!Stalker_Migrator::database_table_exist($table_name)) {
+            trigger_error("Table '$table_name' doesn't exist.", E_USER_ERROR);
+            exit();
+        }
         $self = new static();
         $seed_col = Stalker_Schema::SEED_COLUMN;
         if($main_seed) {

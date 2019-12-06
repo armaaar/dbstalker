@@ -3,7 +3,6 @@
 class Stalker_Database {
 
 	protected $db;
-	protected $connection;
 	/**
 	 * @var array Database drivers that support SAVEPOINT * statements.
 	 */
@@ -50,8 +49,8 @@ class Stalker_Database {
 	 * Make constructor protected, so nobody can call "new Class" but children.
 	 */
 	private function __construct() {
-		$this -> connection = Stalker_Configuration::database_connection();
-		$this -> db = new PDO('mysql:host=' . $this -> connection -> host . ';dbname=' . $this -> connection -> database . ';charset=utf8', $this -> connection -> user, $this -> connection -> password);
+		$connection = Stalker_Configuration::database_connection();
+		$this -> db = new PDO('mysql:host=' . $connection -> host . ';dbname=' . $connection -> database . ';charset=utf8', $connection -> user, $connection -> password);
 		$this -> db -> setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$this -> db -> setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
 		$this -> db -> setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
@@ -144,7 +143,6 @@ class Stalker_Database {
 			$caller = $trace[1];
 			trigger_error($caller['class']. "::" .$caller['function']. " -> " . $ex -> getMessage(), E_USER_ERROR);
 			die();
-			return false;
 		}
 	  	return $stmt;
 	}

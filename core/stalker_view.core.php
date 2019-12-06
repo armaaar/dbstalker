@@ -24,13 +24,8 @@ class Stalker_View
         }
     }
 
-    public function data() { /* Not implemented */ }
-
-    public function serialize() { /* Not implemented */ }
-
-    public static function fetch_all()
-    {
-        return self::fetch();
+    public function serialize() {
+        return json_encode(get_object_vars($this));
     }
 
     public static function get($id)
@@ -67,29 +62,58 @@ class Stalker_View
     }
 
     protected function has_one($table_name, $column_name) {
-        return $table_name::where($column_name, $this->id)->first();
+        if(property_exists($this, 'id') && Stalker_Validator::is_id($this->id)) {
+            return $table_name::where($column_name, $this->id)->first();
+        } else {
+            return null;
+        }
     }
 
     protected function has_many($table_name, $column_name) {
-        return $table_name::where($column_name, $this->id)->fetch();
+        if(property_exists($this, 'id') && Stalker_Validator::is_id($this->id)) {
+            return $table_name::where($column_name, $this->id)->fetch();
+        } else {
+            return null;
+        }
     }
 
     protected function belongs_to($table_name, $column_name) {
+        // if property doesn't exist in instance
+        if(!(property_exists($this, $column_name) && Stalker_Validator::is_id($this->{$column_name}))) {
+            // fetch it from database if you can
+            if(property_exists($this, 'id') && Stalker_Validator::is_id($this->id)) {
+                $this->{$column_name} = self::select($column_name)->where('id', $this->id)->first()->{$column_name};
+            } else { // or return null
+                return null;
+            }
+        }
         return $table_name::where('id', $this->{$column_name})->first();
     }
 
     protected function belongs_to_many($table_name, $column_name) {
+        // if property doesn't exist in instance
+        if(!(property_exists($this, $column_name) && Stalker_Validator::is_id($this->{$column_name}))) {
+            // fetch it from database if you can
+            if(property_exists($this, 'id') && Stalker_Validator::is_id($this->id)) {
+                $this->{$column_name} = self::select($column_name)->where('id', $this->id)->first()->{$column_name};
+            } else { // or return null
+                return null;
+            }
+        }
         return $table_name::where('id', $this->{$column_name})->fetch();
     }
 
     protected function has_one_through($target_table_name, $intermediate_table_name, $intermediate_target_column_name, $intermediate_self_column_name) {
+        if(!(property_exists($this, 'id') && Stalker_Validator::is_id($this->id))) {
+            return null;
+        }
         $stmt = $this->db->execute("SELECT *
                                     FROM `{$target_table_name}`
                                     INNER JOIN `{$intermediate_table_name}`
                                         ON `{$target_table_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_target_column_name}`
-                                    INNER JOIN `{$this->view_name}`
-                                        ON `{$this->view_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_self_column_name}`
-                                    WHERE `{$this->view_name}`.`id` = :id
+                                    INNER JOIN `{$this->table_name}`
+                                        ON `{$this->table_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_self_column_name}`
+                                    WHERE `{$this->table_name}`.`id` = :id
                                     LIMIT 1",
                                 array(":id"=>$this->id));
         $results = $stmt ->fetchAll();
@@ -100,13 +124,16 @@ class Stalker_View
     }
 
     protected function has_many_through($target_table_name, $intermediate_table_name, $intermediate_target_column_name, $intermediate_self_column_name) {
+        if(!(property_exists($this, 'id') && Stalker_Validator::is_id($this->id))) {
+            return null;
+        }
         $stmt = $this->db->execute("SELECT `{$target_table_name}`.*
                                     FROM `{$target_table_name}`
                                     INNER JOIN `{$intermediate_table_name}`
                                         ON `{$target_table_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_target_column_name}`
-                                    INNER JOIN `{$this->view_name}`
-                                        ON `{$this->view_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_self_column_name}`
-                                    WHERE `{$this->view_name}`.`id` = :id",
+                                    INNER JOIN `{$this->table_name}`
+                                        ON `{$this->table_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_self_column_name}`
+                                    WHERE `{$this->table_name}`.`id` = :id",
                                 array(":id"=>$this->id));
         $results = $stmt ->fetchAll();
         return $results;
