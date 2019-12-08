@@ -719,7 +719,7 @@ Stalker_Seeder::delete_table_temporary_seeds('table_name');
 ```
 
 ## Create Views
-DBStalker lets you create views using an SQL query:
+DBStalker lets you create views using an SQL query. To create a view, add a file with the naming convention `table_name.view.php` to the `views` folder with a single class extending `Stalker_View`:
 ```PHP
 class Branch_Courses extends Stalker_View
 {
@@ -821,6 +821,8 @@ Stalker_Backup::restore_backup("2019-12-01")
 Stalker_Backup::restore_backup("2018-09-29", "145457")
 ```
 Note: Database names must match for the backup to be restored.
+
+Backups usually created using a cron job. Cehck `backup.cron.php` for an optimal code to create a backup using DBStalker in a cron job.
 
 ## Future Features
 Bellow is a list of features or tasks to do in the future:
