@@ -154,6 +154,7 @@ Parameters:
 Types:
 - `varchar($name, $length)`
 - `text($name)`
+- `json($name)`
 - `boolean($name)`
 - `enum($name, array $vals)`
 
