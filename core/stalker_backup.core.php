@@ -103,7 +103,7 @@ class Stalker_Backup extends Information_Schema
                     if(is_null($value)) {
                         $query .= "NULL";
                     } elseif(is_string($value)) {
-                        $query .= "'".addcslashes($value,"\n")."'";
+                        $query .= "'".addcslashes($value,"'\n")."'";
                     } else {
                         $query .= "$value";
                     }
