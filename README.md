@@ -807,7 +807,7 @@ Number of backups managed by DBStalker is specified in `stalker_config.json` fil
 ```PHP
 Stalker_Backup::create_backup();
 ```
-This function creates a `.sql` file containing a full backup of the tables and views schema and data. The `sql` file name is created as `stalker-backup~{$database_name}~{date("Y-m-d")}~{date("His")}.sql`. the name consists of 3 main  separated by `~` character:
+This function creates a `.sql` file containing a full backup of the tables and views schema and data. The `sql` file name is created as `stalker-backup~{$database_name}~{date("Y-m-d")}~{date("His")}.sql`. the name consists of 3 main parts separated by `~` character:
 - `$database_name` is the database name
 - `date("Y-m-d")` is the date is the backup
 - `date("His")` is a unique backup series
@@ -823,7 +823,7 @@ Stalker_Backup::restore_backup("2018-09-29", "145457")
 ```
 Note: Database names must match for the backup to be restored.
 
-Backups usually created using a cron job. Cehck `backup.cron.php` for an optimal code to create a backup using DBStalker in a cron job.
+Backups usually created using a cron job. Check `backup.cron.php` for an optimal code to create a backup using DBStalker in a cron job.
 
 ## Future Features
 Bellow is a list of features or tasks to do in the future:
