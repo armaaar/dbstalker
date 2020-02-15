@@ -186,7 +186,7 @@ class Stalker_Backup extends Information_Schema
                 $query .= "DROP TABLE IF EXISTS `$view_name`;\n";
                 // create table schema
                 $query .= "CREATE OR REPLACE VIEW `$view_name` AS ";
-                $query .= self::get_view_definition($view_name);
+                $query .= str_replace("`{$self->connection->database}`.", "", self::get_view_definition($view_name));
                 $query .= ";\n";
 
                 file_put_contents($file, $query, FILE_APPEND | LOCK_EX);

@@ -831,8 +831,8 @@ Bellow is a list of features or tasks to do in the future:
 - Cache table relations instances for performance.
 - Change access modifiers for some internal class methods.
 - Add custom error messages for table validations
-- Create docs to make custom column types
+- Create docs on how make custom column types
 - Find a way to handle table and column renaming in migrations instead of droping and creating
-- Double check for SQL Injections (expecially in seeds).
+- Double check for SQL Injections (especially in seeds).
 ## License
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
