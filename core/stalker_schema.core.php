@@ -83,6 +83,14 @@ class Stalker_Schema{
         return $this;
     }
 
+    public function json($name){
+        $this->table_structure[$name] = array();
+        $this->table_structure[$name]['type'] = array('json');
+        $this->table_structure[$name]['validator'] = "json";
+        $this->last_col = $name;
+        return $this;
+    }
+
     public function date($name){
         $this->table_structure[$name] = array();
         $this->table_structure[$name]['type'] = array('date');

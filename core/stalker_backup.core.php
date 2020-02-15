@@ -5,7 +5,7 @@ class Stalker_Backup extends Information_Schema
 
     const SQL_SEPARATOR = "\n--\n-- --------------------------------------------------------\n--\n";
 
-    protected static function create_table_query($table_name) {
+    protected static function create_table_query($table_name, $file) {
         $table_cols = self::get_table_description($table_name);
         $pri_keys= array();
         $uni_keys= array();
@@ -67,10 +67,13 @@ class Stalker_Backup extends Information_Schema
         $query .= " CHARACTER SET {$table_charset}";
         $query .= " COLLATE {$table_info['TABLE_COLLATION']};";
 
-        return $query;
+
+
+        file_put_contents($file, $query, FILE_APPEND | LOCK_EX);
+        return true;
     }
 
-    protected static function dump_table_query($table_name) {
+    protected static function dump_table_query($table_name, $file) {
         $query = "";
         $self = new static();
         $stmt = $self->db->execute("SELECT * FROM `$table_name`");
@@ -86,30 +89,43 @@ class Stalker_Backup extends Information_Schema
             $query = substr($query, 0, -2);
             $query .= ") VALUES\n";
 
+            file_put_contents($file, $query, FILE_APPEND | LOCK_EX);
+            $query = "";
+
             // dump data
+            $iterator = 1;
+            $rows_count = count($rows);
             foreach ($rows as $row) {
+                $in_iterator = 1;
+                $values_count = count((array)$row);
                 $query .= "(";
                 foreach ($row as $key => $value) {
                     if(is_null($value)) {
-                        $query .= "NULL, ";
+                        $query .= "NULL";
                     } elseif(is_string($value)) {
-                        $query .= "'".addcslashes($value,"\n")."', ";
+                        $query .= "'".addcslashes($value,"\"'\n")."'";
                     } else {
-                        $query .= "$value, ";
+                        $query .= "$value";
+                    }
+                    if($in_iterator++ < $values_count) {
+                        $query .= ", ";
                     }
                 }
-                // remove last comma and space
-                $query = substr($query, 0, -2);
-                $query .= "),\n";
+                $query .= ")";
+                if($iterator++ < $rows_count) {
+                    $query .= ",\n";
+                }
+                file_put_contents($file, $query, FILE_APPEND | LOCK_EX);
+                $query = "";
             }
-            // remove last comma and newline
-            $query = substr($query, 0, -2);
             $query .= ";";
+            file_put_contents($file, $query, FILE_APPEND | LOCK_EX);
+            $query = "";
         }
-        return $query;
+        return true;
     }
 
-    private static function create_backup_query() {
+    private static function create_backup_query($file) {
         $self = new static();
         // add general info
         $query = "-- Database Stalker SQL Dump\n";
@@ -125,6 +141,9 @@ class Stalker_Backup extends Information_Schema
         $query .= 'START TRANSACTION;'."\n";
         $query .= 'SET time_zone = "+00:00";'."\n";
 
+        file_put_contents($file, $query, FILE_APPEND | LOCK_EX);
+        $query = "";
+
         // insert tables
         $db_tables = self::get_database_tables();
         if($db_tables) {
@@ -135,13 +154,24 @@ class Stalker_Backup extends Information_Schema
                 // drop table if exist
                 $query .= "DROP TABLE IF EXISTS `$table_name`;\n";
                 // create table schema
-                $query .= self::create_table_query($table_name);
+
+                file_put_contents($file, $query, FILE_APPEND | LOCK_EX);
+                $query = "";
+
+                self::create_table_query($table_name, $file);
                 $query .= "\n";
 
                 // insert data into table
                 $query .= "\n--\n-- Dumping data for table `$table_name`\n--\n\n";
-                $query .= self::dump_table_query($table_name);
+
+                file_put_contents($file, $query, FILE_APPEND | LOCK_EX);
+                $query = "";
+
+                self::dump_table_query($table_name, $file);
                 $query .= "\n";
+
+                file_put_contents($file, $query, FILE_APPEND | LOCK_EX);
+                $query = "";
             }
         }
 
@@ -156,19 +186,23 @@ class Stalker_Backup extends Information_Schema
                 $query .= "DROP TABLE IF EXISTS `$view_name`;\n";
                 // create table schema
                 $query .= "CREATE OR REPLACE VIEW `$view_name` AS ";
-                $query .= self::get_view_definition($view_name);
+                $query .= str_replace("`{$self->connection->database}`.", "", self::get_view_definition($view_name));
                 $query .= ";\n";
+
+                file_put_contents($file, $query, FILE_APPEND | LOCK_EX);
+                $query = "";
             }
         }
 
         // commit query
         $query .= "\n".'COMMIT;'."\n";
-        return $query;
+
+        file_put_contents($file, $query, FILE_APPEND | LOCK_EX);
+        return true;
     }
 
     public static function create_backup() {
         $self = new static();
-        $query = self::create_backup_query();
         $backup_dir = './backups';
         $backup_file = "stalker-backup~{$self->connection->database}~".date("Y-m-d~His").".sql";
 
@@ -241,7 +275,7 @@ class Stalker_Backup extends Information_Schema
 
             }
             // create the backup file
-            file_put_contents($backup_dir.'/'.$backup_file, $query, FILE_APPEND | LOCK_EX);
+            self::create_backup_query($backup_dir.'/'.$backup_file);
         } catch (Exception $ex) {
 			$trace = debug_backtrace();
 			$caller = $trace[1];

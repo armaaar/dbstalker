@@ -154,6 +154,7 @@ Parameters:
 Types:
 - `varchar($name, $length)`
 - `text($name)`
+- `json($name)`
 - `boolean($name)`
 - `enum($name, array $vals)`
 
@@ -719,7 +720,7 @@ Stalker_Seeder::delete_table_temporary_seeds('table_name');
 ```
 
 ## Create Views
-DBStalker lets you create views using an SQL query:
+DBStalker lets you create views using an SQL query. To create a view, add a file with the naming convention `table_name.view.php` to the `views` folder with a single class extending `Stalker_View`:
 ```PHP
 class Branch_Courses extends Stalker_View
 {
@@ -806,7 +807,7 @@ Number of backups managed by DBStalker is specified in `stalker_config.json` fil
 ```PHP
 Stalker_Backup::create_backup();
 ```
-This function creates a `.sql` file containing a full backup of the tables and views schema and data. The `sql` file name is created as `stalker-backup~{$database_name}~{date("Y-m-d")}~{date("His")}.sql`. the name consists of 3 main  separated by `~` character:
+This function creates a `.sql` file containing a full backup of the tables and views schema and data. The `sql` file name is created as `stalker-backup~{$database_name}~{date("Y-m-d")}~{date("His")}.sql`. the name consists of 3 main parts separated by `~` character:
 - `$database_name` is the database name
 - `date("Y-m-d")` is the date is the backup
 - `date("His")` is a unique backup series
@@ -822,14 +823,16 @@ Stalker_Backup::restore_backup("2018-09-29", "145457")
 ```
 Note: Database names must match for the backup to be restored.
 
+Backups usually created using a cron job. Check `backup.cron.php` for an optimal code to create a backup using DBStalker in a cron job.
+
 ## Future Features
 Bellow is a list of features or tasks to do in the future:
 - Cache table schema for performance.
 - Cache table relations instances for performance.
 - Change access modifiers for some internal class methods.
 - Add custom error messages for table validations
-- Create docs to make custom column types
+- Create docs on how make custom column types
 - Find a way to handle table and column renaming in migrations instead of droping and creating
-- Double check for SQL Injections (expecially in seeds).
+- Double check for SQL Injections (especially in seeds).
 ## License
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
