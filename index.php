@@ -151,6 +151,9 @@ if(isset($_POST['restoreBackup']) && isset($_POST['password']) && isset($_POST['
                     </div>
                 </div>
             </div>
+            <div class="col-xs-12" id="errors">
+
+            </div>
         </div>
     </div>
 
@@ -162,6 +165,7 @@ if(isset($_POST['restoreBackup']) && isset($_POST['password']) && isset($_POST['
         jQuery(document).ready(function ($){
             // login
             $loading = $("#loading")
+            $errors = $("#errors")
             $("form.password-container").on("submit", function(){
                 var password = $("#password").val();
                 $loading.fadeIn();
@@ -206,6 +210,7 @@ if(isset($_POST['restoreBackup']) && isset($_POST['password']) && isset($_POST['
             $(".create-backup").click(function(){
                 var password = $("#password").val();
                 $loading.fadeIn();
+                $errors.html("");
                 $.post("",
                 {
                     createBackup : true,
@@ -242,13 +247,12 @@ if(isset($_POST['restoreBackup']) && isset($_POST['password']) && isset($_POST['
                 function(data, status){
                     if(status == 'success')
                     {
-                        if(data == 'ok')
-                        {
+                        if(data == 'ok') {
                             alert("Database restored successfully");
 
-                        }else
-                        {
-                            alert(data);
+                        } else {
+                            console.log(data);
+                            $errors.html(data);
                         }
                         $loading.fadeOut();
                     } else
