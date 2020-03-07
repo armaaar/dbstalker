@@ -344,20 +344,26 @@ class Stalker_Backup extends Information_Schema
             return FALSE;
         }
         // get queries to run
-        $query = file_get_contents($backup_file);
-        $query_explode = explode('START TRANSACTION;', $query);
-        $query = $query_explode[1];
-        $query_explode = explode('COMMIT;', $query);
-        $query = $query_explode[0];
-        $query_explode = explode(';', $query);
-
-        // start transaction
         $self->db->beginTransaction();
-        foreach ($query_explode as $partial_query) {
-            if(strlen(trim($partial_query)) != 0) {
-                $stmt = $self->db->execute($partial_query);
+        $file_pointer = fopen($backup_file, "r");
+        $query = "";
+        while(!feof($file_pointer)) {
+            $query .= fgets($file_pointer);
+            if (substr($query, -2) === ";\n") {
+                if(strlen(trim($query)) != 0) {
+                    if(
+                        strpos(strtoupper($query), "START TRANSACTION") !== false ||
+                        strpos(strtoupper($query), "COMMIT") !== false
+                    ) {
+                        $query = "";
+                        continue;
+                    }
+                    $stmt = $self->db->unprepared_execute($query);
+                }
+                $query = "";
             }
         }
+        fclose($file_pointer);
         $self->db->commit();
         return TRUE;
     }
