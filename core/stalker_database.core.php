@@ -147,6 +147,27 @@ class Stalker_Database {
 	  	return $stmt;
 	}
 
+	public function unprepared_execute($query)
+	{
+		if(empty($query))
+		{
+			$trace = debug_backtrace();
+			$caller = $trace[1];
+			trigger_error($caller['class']. "::" .$caller['function']. " -> Empty query string", E_USER_ERROR);
+			die();
+			return false;
+		}
+		try {
+			$stmt = $this -> db -> exec($query);
+		} catch(PDOException $ex) {
+			$trace = debug_backtrace();
+			$caller = $trace[1];
+            trigger_error($caller['class']. "::" .$caller['function']. " -> " . $ex -> getMessage(), E_USER_ERROR);
+			die();
+		}
+	  	return $stmt;
+	}
+
 	public function lastInsertId($name = null)
 	{
 	  return $this -> db -> lastInsertId($name);
