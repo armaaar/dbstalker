@@ -5,13 +5,8 @@ class Stalker_Table
     protected $table_name;
     protected $db;
 
-    public function __construct($data=null)
-    {
-        //register the table
+    public function __construct($data=null) {
         $this->table_name = strtolower(get_class($this));
-        if(!Stalker_Registerar::is_table_registered($this->table_name)){
-            Stalker_Registerar::register_table($this->table_name, $this);
-        }
 
         // get db instance
         $this -> db = Stalker_Database::instance();
@@ -49,10 +44,8 @@ class Stalker_Table
     }
 
     public function update_object($data) {
-        if(is_array($data) || is_object($data))
-        {
-            foreach ($data as $key => $value)
-            {
+        if (is_array($data) || is_object($data)) {
+            foreach ($data as $key => $value) {
                 $this->{$key} = $value;
             }
             return true;
@@ -251,6 +244,5 @@ class Stalker_Table
         $results = $stmt ->fetchAll();
         return $results;
     }
-
 }
 ?>

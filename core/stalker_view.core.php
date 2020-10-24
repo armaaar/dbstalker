@@ -5,22 +5,22 @@ class Stalker_View
     public $view_name;
     protected $db;
 
-    public function __construct($data=null)
-    {
-        //register the table
+    public function __construct($data=null) {
         $this->view_name = strtolower(get_class($this));
-        if(!Stalker_Registerar::is_view_registered($this->view_name)){
-            Stalker_Registerar::register_view($this->view_name, $this);
-        }
 
+        // get db instance
         $this -> db = Stalker_Database::instance();
+        $this -> update_object($data);
+    }
 
-        if(is_array($data) || is_object($data))
-        {
-            foreach ($data as $key => $value)
-            {
+    public function update_object($data) {
+        if (is_array($data) || is_object($data)) {
+            foreach ($data as $key => $value) {
                 $this->{$key} = $value;
             }
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -138,6 +138,5 @@ class Stalker_View
         $results = $stmt ->fetchAll();
         return $results;
     }
-
 }
 ?>
