@@ -20,16 +20,15 @@ class Stalker_Database {
     /**
      * Call this method to get singleton
      */
-    public static function instance()
+    public static function instance($force_new_instance = false)
     {
-      static $instance = null;
-      if( $instance === null )
-      {
-        // Late static binding (PHP 5.3+)
-        $instance = new static();
-      }
+        static $instance = null;
+        if( $instance === null || $force_new_instance ) {
+            // Late static binding (PHP 5.3+)
+            $instance = new static();
+        }
 
-      return $instance;
+        return $instance;
     }
     /**
      * Make clone magic method private, so nobody can clone instance.
@@ -49,7 +48,7 @@ class Stalker_Database {
 	 * Make constructor protected, so nobody can call "new Class" but children.
 	 */
 	private function __construct() {
-		$connection = Stalker_Configuration::database_connection();
+        $connection = Stalker_Configuration::database_connection();
 		$this -> db = new PDO('mysql:host=' . $connection -> host . ';dbname=' . $connection -> database . ';charset=utf8', $connection -> user, $connection -> password);
 		$this -> db -> setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$this -> db -> setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
