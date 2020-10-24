@@ -59,6 +59,16 @@ DBStalker can create, restore and managa backups programatically. The third sect
 - `max`: number of backups to keep overall (default: 10)
 where any value < 1 is considered unlimited.
 
+### Custom Configuration File
+If you need to have a custom different path or name for your configuration file, you can set the configuration file path manually:
+```php
+Stalker_Configuration::set_stalker_configuration("path/to/your/custom_configuration_file.json");
+```
+Or you can pass the configuration object directly:
+```php
+Stalker_Configuration::set_stalker_configuration($configuration);
+```
+
 ## Add core files
 Next, You need to include all the `core` files and all your tables, seeds and views files to the project. You should user the following order to avoid errors:
 ```PHP
@@ -749,6 +759,11 @@ All DBStalker features are built on a singleton instance connecting to database 
 ```PHP
 $db_instance = Stalker_Database::instance();
 ```
+If you need to have multiple instances of the database connection (e.g. In case of multible database connections), you can force creating a new instance:
+```PHP
+$forced_new_db_instance = Stalker_Database::instance(true);
+```
+
 
 ### Excute Raw SQL
 The database instance handles PDO Preparations and data bindings and catches any `PDOException`. To execute a raw SQL query:
