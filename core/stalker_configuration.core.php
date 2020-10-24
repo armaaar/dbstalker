@@ -18,24 +18,40 @@ class Stalker_Configuration {
 
     private function __construct() {}
 
-    private static function read_stalker_configuration() {
+    public static function set_stalker_configuration($config = "./stalker_config.json") {
+        if (is_string($config)) {
             self::$configuration = json_decode(file_get_contents("./stalker_config.json"));
-            if(json_last_error()===JSON_ERROR_NONE) {
-                self::$fatal_error = FALSE;
-                return TRUE;
-            } else {
-                self::$fatal_error = TRUE;
-                return json_last_error();
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                self::$fatal_error = json_last_error();
+                return FALSE;
             }
+        } else if (is_object($config)) {
+            self::$configuration = $config;
+        } else if (is_array($config)) {
+            self::$configuration = (object) $config;
+        }
+
+        if (
+            !is_object(self::$configuration)
+            || !property_exists(self::$configuration, "database")
+        ) {
+            self::$fatal_error = "Invalid database configurations";
+            return FALSE;
+        }
+        self::$fatal_error = FALSE;
+        return TRUE;
     }
 
     private static function public_decorator(Closure $public_function) {
         if(empty(self::$configuration)) {
-            self::read_stalker_configuration();
+            self::set_stalker_configuration();
         }
         if(!self::$fatal_error) {
             return $public_function();
         }
+        $trace = debug_backtrace();
+        $caller = $trace[1];
+        trigger_error($caller['class']. "::" .$caller['function']. " -> " . self::$fatal_error, E_USER_ERROR);
         return FALSE;
     }
 
