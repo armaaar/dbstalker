@@ -43,7 +43,7 @@ class Stalker_Query
         $this->aggregate_columns = array();
 
         $this->supported_operands = array(
-            '=', '<>', 'is', 'is not', '>', '>=', '<', '<=', 'like', 'not like'
+            '=', '<>', 'is', 'is not', '>', '>=', '<', '<=', 'like', 'not like', 'in', 'not in'
         );
 
         $this->supported_aggregate_functions = array(
@@ -109,12 +109,24 @@ class Stalker_Query
             $where .= " `$column` ".$operand." $value";
         } else {
             if(is_null($value)) {
-                if(in_array($operand, array('<>', 'is not', 'not like'))) {
+                if(in_array($operand, array('<>', 'is not', 'not like', 'not in'))) {
                     $where .= " `$column` IS NOT NULL";
                 } else {
                     $where .= " `$column` IS NULL";
                 }
 
+            } elseif (is_array($value)) {
+                $args_keys = [];
+                foreach ($value as $in_value) {
+                    $args_keys[] = ":".$column.$this->args_key_counter;
+                    $args[":".$column.$this->args_key_counter] = $in_value;
+                    $this->args_key_counter++;
+                }
+                if(in_array($operand, array('<>', 'is not', 'not like', 'not in'))) {
+                    $where .= " `$column` NOT IN (".implode(",", $args_keys).")";
+                } else {
+                    $where .= " `$column` IN (".implode(",", $args_keys).")";
+                }
             } else {
                 $where .= " `$column` ".$operand." :".$column.$this->args_key_counter;
                 $args[":".$column.$this->args_key_counter] = $value;
@@ -177,7 +189,7 @@ class Stalker_Query
             $having .= " `$column` ".$operand." $value";
         } else {
             if(is_null($value)) {
-                if(in_array($operand, array('<>', 'is not', 'not like'))) {
+                if(in_array($operand, array('<>', 'is not', 'not like', 'not in'))) {
                     $having .= " `$column` IS NOT NULL";
                 } else {
                     $having .= " `$column` IS NULL";
