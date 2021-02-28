@@ -85,6 +85,16 @@ class Information_Schema
     }
 
     // helper methods
+    public static function database_exists($db_name){
+        $self = new static();
+        $stmt = $self->db->execute("SELECT SCHEMA_NAME
+                                    FROM INFORMATION_SCHEMA.SCHEMATA
+                                    WHERE SCHEMA_NAME = ?",
+                                array($db_name));
+        $results = $stmt ->fetchAll();
+        return boolval($results);
+    }
+
     public static function table_has_column($table_name, $column_name) {
         $cols = self::get_table_description($table_name);
         $key = array_search($column_name, array_column($cols, 'Field'));
