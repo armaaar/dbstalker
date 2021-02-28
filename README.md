@@ -41,7 +41,7 @@ DBStalker support custom column types with custom validators. Each custom column
 "customLengths": {
     "id": 11,
     "email": 255,
-    "password": 40,
+    "password": 64,
     "phone": 20,
     "ip": 45,
     "link": 511

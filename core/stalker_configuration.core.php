@@ -9,7 +9,7 @@ class Stalker_Configuration {
     const COLLATION = "utf8_general_ci";
     const ID_LENGTH = 11;
     const EMAIL_LENGTH = 255;
-    const PASSWORD_LENGTH = 40;
+    const PASSWORD_LENGTH = 64;
     const PHONE_LENGTH = 20;
     const IP_LENGTH = 45;
     const LINK_LENGTH = 511;

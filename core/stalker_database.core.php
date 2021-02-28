@@ -143,7 +143,7 @@ class Stalker_Database {
 			trigger_error($caller['class']. "::" .$caller['function']. " -> " . $ex -> getMessage(), E_USER_ERROR);
 			die();
 		}
-	  	return $stmt;
+        return $stmt;
 	}
 
 	public function unprepared_execute($query)
@@ -164,12 +164,12 @@ class Stalker_Database {
             trigger_error($caller['class']. "::" .$caller['function']. " -> " . $ex -> getMessage(), E_USER_ERROR);
 			die();
 		}
-	  	return $stmt;
+        return $stmt;
 	}
 
 	public function lastInsertId($name = null)
 	{
-	  return $this -> db -> lastInsertId($name);
+        return $this -> db -> lastInsertId($name);
 	}
 }
 ?>
