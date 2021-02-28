@@ -213,18 +213,20 @@ class Stalker_Table
         if(!(property_exists($this, 'id') && Stalker_Validator::is_id($this->id))) {
             return null;
         }
-        $stmt = $this->db->execute("SELECT *
-                                    FROM `{$target_table_name}`
-                                    INNER JOIN `{$intermediate_table_name}`
-                                        ON `{$target_table_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_target_column_name}`
+        $intermediate_table_name = strtolower($intermediate_table_name);
+        $stmt = $this->db->execute("SELECT `INTERMEDIATE_TABLE_NAME`.`{$intermediate_target_column_name}`
+                                    FROM `{$intermediate_table_name}` AS `INTERMEDIATE_TABLE_NAME`
                                     INNER JOIN `{$this->table_name}`
-                                        ON `{$this->table_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_self_column_name}`
+                                        ON `{$this->table_name}`.`id` = `INTERMEDIATE_TABLE_NAME`.`{$intermediate_self_column_name}`
                                     WHERE `{$this->table_name}`.`id` = :id
                                     LIMIT 1",
                                 array(":id"=>$this->id));
-        $results = $stmt ->fetchAll();
+
+        $results = array_map(function ($record) use ($intermediate_target_column_name) {
+            return $record->{$intermediate_target_column_name};
+        }, $stmt ->fetchAll());
         if($results) {
-            return $results[0];
+            return $target_table_name::where('id', $results[0])->first();
         }
         return null;
     }
@@ -233,16 +235,21 @@ class Stalker_Table
         if(!(property_exists($this, 'id') && Stalker_Validator::is_id($this->id))) {
             return null;
         }
-        $stmt = $this->db->execute("SELECT `{$target_table_name}`.*
-                                    FROM `{$target_table_name}`
-                                    INNER JOIN `{$intermediate_table_name}`
-                                        ON `{$target_table_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_target_column_name}`
+        $lower_intermediate_table_name = strtolower($intermediate_table_name);
+        $stmt = $this->db->execute("SELECT `INTERMEDIATE_TABLE_NAME`.`{$intermediate_target_column_name}`
+                                    FROM `{$lower_intermediate_table_name}` AS `INTERMEDIATE_TABLE_NAME`
                                     INNER JOIN `{$this->table_name}`
-                                        ON `{$this->table_name}`.`id` = `{$intermediate_table_name}`.`{$intermediate_self_column_name}`
+                                        ON `{$this->table_name}`.`id` = `INTERMEDIATE_TABLE_NAME`.`{$intermediate_self_column_name}`
                                     WHERE `{$this->table_name}`.`id` = :id",
                                 array(":id"=>$this->id));
-        $results = $stmt ->fetchAll();
-        return $results;
+
+        $results = array_map(function ($record) use ($intermediate_target_column_name) {
+            return $record->{$intermediate_target_column_name};
+        }, $stmt ->fetchAll());
+        if($results) {
+            return $target_table_name::where('id', $results, 'in')->fetch();
+        }
+        return [];
     }
 }
 ?>
